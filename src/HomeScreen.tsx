@@ -19,12 +19,11 @@ import SettingsDialog from './components/SettingsDialog';
 import StatsRow from './components/StatsRow';
 import { type Mode, dateKey, formatTime, logDateFor, monthStats, shiftMonth } from './lib/time';
 import { palette } from './theme';
-import { useRise } from './useRise';
+import type { Rise } from './useRise';
 
-export default function HomeScreen() {
+export default function HomeScreen({ rise }: { rise: Rise }) {
   const theme = useTheme<MD3Theme>();
   const insets = useSafeAreaInsets();
-  const rise = useRise();
   const [now, setNow] = useState(() => new Date());
   const [picked, setPicked] = useState<Mode>('wake');
   const [view, setView] = useState(() => ({ year: now.getFullYear(), month: now.getMonth() }));
@@ -88,7 +87,7 @@ export default function HomeScreen() {
         )}
         {/* Peach blush is a fill only: text on it is always deep plum. */}
         <Chip style={styles.chip} textStyle={{ color: palette.deepPlum }}>
-          {`Target ${mode === 'wake' ? 'wake-up' : 'bedtime'} ${formatTime(target)}`}
+          {`Target ${mode === 'wake' ? 'wake-up' : 'bedtime'} ${formatTime(target, rise.hour24)}`}
         </Chip>
         <StatsRow stats={monthStats(records, view.year, view.month, mode, target, applyToPast)} />
         <MonthCalendar
@@ -98,6 +97,7 @@ export default function HomeScreen() {
           mode={mode}
           currentTarget={target}
           applyToPast={applyToPast}
+          hour24={rise.hour24}
           todayKey={dateKey(now)}
           onPrev={() => setView(shiftMonth(view.year, view.month, -1))}
           onNext={() => setView(shiftMonth(view.year, view.month, 1))}
@@ -126,6 +126,7 @@ export default function HomeScreen() {
           entry={records[selectedKey]}
           currentTarget={target}
           applyToPast={applyToPast}
+          hour24={rise.hour24}
           onSave={(time) => {
             rise.setEntry(mode, selectedKey, time);
             setSelectedKey(null);
@@ -141,6 +142,7 @@ export default function HomeScreen() {
       <SettingsDialog
         visible={settingsOpen}
         config={rise.config}
+        hour24={rise.hour24}
         onChange={rise.setConfig}
         onDismiss={() => setSettingsOpen(false)}
       />

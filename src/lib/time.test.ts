@@ -1,4 +1,5 @@
 import {
+  CELL_WIDTH,
   type Records,
   addEntry,
   bedDateFor,
@@ -14,10 +15,11 @@ import {
   monthStats,
   parseTime,
   removeEntry,
+  resolveDark,
+  resolveHour24,
   shiftMonth,
   timeOf,
   upsertEntry,
-  uses24Hour,
 } from './time';
 
 describe('isTime', () => {
@@ -188,6 +190,16 @@ describe('shiftMonth', () => {
   });
 });
 
+describe('CELL_WIDTH', () => {
+  // At exactly 100/7 the seven widths round to just over the row on some
+  // screen widths, and the layout engine wraps the seventh day to the next row.
+  test('seven cells total under 100% with room for rounding', () => {
+    const week = parseFloat(CELL_WIDTH) * 7;
+    expect(week).toBeLessThanOrEqual(99.99);
+    expect(week).toBeGreaterThan(99.9);
+  });
+});
+
 describe('monthCells', () => {
   test('October 2026 starts on a Thursday and has 31 days', () => {
     const cells = monthCells(2026, 9);
@@ -243,18 +255,41 @@ describe('removeEntry', () => {
   });
 });
 
-describe('formatTime and uses24Hour', () => {
-  // Intl may put a narrow no-break space before AM/PM.
-  const plain = (text: string) => text.replace(/\s/g, ' ');
-
-  test('12-hour locale', () => {
-    expect(plain(formatTime('06:05', 'en-US'))).toBe('6:05 AM');
-    expect(plain(formatTime('18:30', 'en-US'))).toBe('6:30 PM');
-    expect(uses24Hour('en-US')).toBe(false);
+describe('formatTime', () => {
+  test('12-hour', () => {
+    expect(formatTime('06:05', false)).toBe('6:05 AM');
+    expect(formatTime('18:30', false)).toBe('6:30 PM');
+    expect(formatTime('00:00', false)).toBe('12:00 AM');
+    expect(formatTime('12:00', false)).toBe('12:00 PM');
   });
 
-  test('24-hour locale', () => {
-    expect(formatTime('18:30', 'en-GB')).toBe('18:30');
-    expect(uses24Hour('en-GB')).toBe(true);
+  test('24-hour', () => {
+    expect(formatTime('06:05', true)).toBe('06:05');
+    expect(formatTime('18:30', true)).toBe('18:30');
+    expect(formatTime('00:00', true)).toBe('00:00');
+  });
+});
+
+describe('resolveHour24', () => {
+  test('"device" follows the device setting', () => {
+    expect(resolveHour24('device', true)).toBe(true);
+    expect(resolveHour24('device', false)).toBe(false);
+  });
+
+  test('an explicit choice overrides the device', () => {
+    expect(resolveHour24('12h', true)).toBe(false);
+    expect(resolveHour24('24h', false)).toBe(true);
+  });
+});
+
+describe('resolveDark', () => {
+  test('"device" follows the device theme', () => {
+    expect(resolveDark('device', true)).toBe(true);
+    expect(resolveDark('device', false)).toBe(false);
+  });
+
+  test('an explicit choice overrides the device', () => {
+    expect(resolveDark('light', true)).toBe(false);
+    expect(resolveDark('dark', false)).toBe(true);
   });
 });

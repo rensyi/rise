@@ -2,7 +2,9 @@
 
 Date: 2026-10-12
 Status: approved 2026-10-12; sections 3.5, 5, 7 and 8 amended while writing
-the implementation plan (`docs/superpowers/plans/2026-10-12-rise.md`)
+the implementation plan (`docs/superpowers/plans/2026-10-12-rise.md`);
+sections 3.4, 3.5, 5 and 6 amended after device testing the same day (time
+format and theme settings)
 
 ## 1. Purpose
 
@@ -118,6 +120,12 @@ A dialog opened from the top app bar:
   switching it off again restores the original colours and stats.
 - **Track bedtime** — switch, default off.
 - **Target bedtime** — default 22:00. Shown only when Track bedtime is on.
+- **Time format** — Device, 12-hour or 24-hour; default Device. Device
+  follows the phone's own 12/24-hour switch.
+- **Theme** — Device, Light or Dark; default Device. Device follows the
+  phone's light or dark mode.
+
+The dialog scrolls, so every setting stays reachable on a short screen.
 
 Turning Track bedtime off hides the mode switch and returns Home to Wake
 mode. Bedtime entries are kept and reappear when it is turned back on.
@@ -128,7 +136,8 @@ link wake and bedtime.
 
 ### 3.5 Theme and colour
 
-Light and dark theme follow the system setting. Both are built from one
+The Theme setting (3.4) picks light or dark; by default it follows the
+system setting. Both themes are built from one
 palette:
 
 | Name | Hex | Light theme | Dark theme |
@@ -159,6 +168,10 @@ text):
   mist). Text-only buttons use the main text colour, and in the light theme
   the time picker, which draws its own text in the primary colour, is given
   Muted purple as its primary.
+- **The time picker's own surface is the screen background colour**, not the
+  card colour, in both themes. The picker draws its clock face in the card
+  colour, so on a card-coloured surface the face would be invisible and its
+  text would fall to 4.2:1 (light) and 4.5:1 (dark).
 
 **Tiles** are Lavender over the background at four opacities:
 
@@ -174,8 +187,11 @@ Every tile and number pairing is at least 4.8:1 in both themes. The four
 opacities are constants in one place so they can be tuned on a real device.
 Today's outline uses the main text colour.
 
-**Times** are shown in the device locale's format through
-`Intl.DateTimeFormat`; the time picker uses the same 12- or 24-hour mode.
+**Times** are shown as `6:05 AM` or `06:05` according to the Time format
+setting (3.4), and the time picker uses the same mode. Formatting is done in
+the app's own code, not `Intl.DateTimeFormat`: `Intl` follows the language
+region and ignores the phone's separate 12/24-hour switch, which was found
+on a real device. Stored times are always 24-hour.
 
 ## 4. Research basis for the defaults
 
@@ -217,6 +233,7 @@ Expo (React Native, TypeScript), one screen, no navigation library.
 App.tsx                      PaperProvider + HomeScreen
 jest.global-setup.js         fixed time zone for tests
 src/theme.ts                 palette, light and dark themes, tile opacities
+src/theme.test.ts            unit tests
 src/lib/time.ts              pure logic, no React, no storage
 src/lib/time.test.ts         unit tests
 src/storage.ts               parse, load, save
@@ -225,6 +242,7 @@ src/useRise.ts               state hook
 src/HomeScreen.tsx           screen layout
 src/components/
   TimeField.tsx              time button + time picker, used by both dialogs
+  TimeField.test.tsx         unit test
   MonthCalendar.tsx          grid of tiles, legend
   StatsRow.tsx               three stat cards
   DayDialog.tsx              add, edit, delete one day
@@ -249,7 +267,10 @@ principle 2 is enforced.
 - `react-native-paper-dates` — Material 3 time picker
 - `@react-native-async-storage/async-storage`
 - Runtime support for the above: `react-native-safe-area-context`,
-  `@expo/vector-icons`, `expo-font`, `expo-system-ui`
+  `@expo/vector-icons`, `expo-font`, `expo-system-ui`, `expo-status-bar`
+- `expo-localization` — reads the phone's 12/24-hour switch
+- Development only: `jest-expo`, `jest`, `@types/jest`,
+  `react-test-renderer`, `@types/react-test-renderer`
 
 **Theme.** `src/theme.ts` extends Paper's Material 3 light and dark themes
 with the palette in 3.5, written out by hand. No runtime colour generation
@@ -264,7 +285,7 @@ AsyncStorage, three keys, JSON values:
 |---|---|
 | `rise.wake` | `{ "2026-10-12": { "time": "06:45", "target": "06:00" }, ... }` |
 | `rise.bed` | `{ "2026-10-11": { "time": "23:10", "target": "22:00" }, ... }` |
-| `rise.config` | `{ "wakeTarget": "06:00", "bedEnabled": false, "bedTarget": "22:00", "applyTargetsToPast": false }` |
+| `rise.config` | `{ "wakeTarget": "06:00", "bedEnabled": false, "bedTarget": "22:00", "applyTargetsToPast": false, "timeFormat": "device", "theme": "device" }` |
 
 - Date keys are local calendar dates as `YYYY-MM-DD`.
 - Times and targets are 24-hour `HH:mm`.
@@ -311,7 +332,17 @@ bugs fail on every machine.
 - `bedDateFor` just before and just after 12:00
 - `latenessLabel` for early, on time, minutes late, hours late
 
-Components are checked by running the app.
+`theme.ts` and `components/TimeField.tsx`:
+
+- the time picker's clock face differs from its surface, and its text is
+  at least 4.5:1, in both themes
+- the time picker is mounted only while open, so a cancelled choice is not
+  remembered
+
+`lib/time.ts` also checks that seven calendar cells total just under 100%
+of the row, so the seventh day cannot wrap on any screen width.
+
+The remaining components and the home screen are checked by running the app.
 
 ## 9. Out of scope
 

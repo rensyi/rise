@@ -76,12 +76,16 @@ export const darkTheme: MD3Theme = {
   },
 };
 
-// The time picker draws text in `primary`. Lavender text is unreadable on light
-// surfaces, so the light theme swaps in muted purple for the picker only.
-export const pickerTheme = (theme: MD3Theme): MD3Theme =>
-  theme.dark
-    ? theme
-    : {
-        ...theme,
-        colors: { ...theme.colors, primary: palette.mutedPurple, onPrimary: palette.morningMist },
-      };
+// Theme for the time picker only. The picker paints its surface with
+// elevation.level3 and its clock face with surfaceVariant, which are the same
+// colour in the app themes, so the surface is moved to the background colour
+// to keep the clock face visible. It also draws text in `primary`: lavender is
+// unreadable on light surfaces, so the light theme swaps in muted purple.
+export const pickerTheme = (theme: MD3Theme): MD3Theme => ({
+  ...theme,
+  colors: {
+    ...theme.colors,
+    ...(theme.dark ? {} : { primary: palette.mutedPurple, onPrimary: palette.morningMist }),
+    elevation: { ...theme.colors.elevation, level3: theme.colors.background },
+  },
+});

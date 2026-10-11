@@ -56,6 +56,27 @@ describe('parseConfig', () => {
     const raw = JSON.stringify({ wakeTarget: '09:00', bedEnabled: 'yes', bedTarget: '9pm' });
     expect(parseConfig(raw)).toEqual({ ...DEFAULT_CONFIG, wakeTarget: '09:00' });
   });
+
+  test('settings saved before time format and theme existed load with "device"', () => {
+    const raw = JSON.stringify({
+      wakeTarget: '09:00',
+      bedEnabled: true,
+      bedTarget: '23:00',
+      applyTargetsToPast: true,
+    });
+    expect(parseConfig(raw)).toMatchObject({ timeFormat: 'device', theme: 'device' });
+  });
+
+  test('keeps a valid time format and theme, and defaults unknown ones', () => {
+    expect(parseConfig(JSON.stringify({ timeFormat: '24h', theme: 'dark' }))).toMatchObject({
+      timeFormat: '24h',
+      theme: 'dark',
+    });
+    expect(parseConfig(JSON.stringify({ timeFormat: 'military', theme: 7 }))).toMatchObject({
+      timeFormat: 'device',
+      theme: 'device',
+    });
+  });
 });
 
 describe('load', () => {

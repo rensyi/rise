@@ -19,6 +19,7 @@ type Props = {
   entry: Entry | undefined;
   currentTarget: string;
   applyToPast: boolean;
+  hour24: boolean;
   onSave: (time: string) => void;
   onDelete: () => void;
   onDismiss: () => void;
@@ -31,6 +32,7 @@ export default function DayDialog({
   entry,
   currentTarget,
   applyToPast,
+  hour24,
   onSave,
   onDelete,
   onDismiss,
@@ -53,8 +55,8 @@ export default function DayDialog({
         <Dialog.Title>{name}</Dialog.Title>
         <Dialog.Content style={styles.content}>
           <Text variant="bodyLarge">{date}</Text>
-          <Text variant="bodyMedium">Target {formatTime(target)}</Text>
-          <TimeField label={`${name} time`} value={time} onChange={setTime} />
+          <Text variant="bodyMedium">Target {formatTime(target, hour24)}</Text>
+          <TimeField label={`${name} time`} value={time} hour24={hour24} onChange={setTime} />
           {/* The preview sits on the screen background so it matches the calendar tile. */}
           <View style={[styles.preview, { backgroundColor: theme.colors.background }]}>
             <View style={[styles.previewFill, { backgroundColor: tileColor(tileLevel) }]}>

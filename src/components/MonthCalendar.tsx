@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { IconButton, type MD3Theme, Text, TouchableRipple, useTheme } from 'react-native-paper';
 import {
+  CELL_WIDTH,
   type Level,
   type Mode,
   type Records,
@@ -29,6 +30,7 @@ type Props = {
   mode: Mode;
   currentTarget: string;
   applyToPast: boolean;
+  hour24: boolean;
   todayKey: string;
   onPrev: () => void;
   onNext: () => void;
@@ -42,6 +44,7 @@ export default function MonthCalendar({
   mode,
   currentTarget,
   applyToPast,
+  hour24,
   todayKey,
   onPrev,
   onNext,
@@ -83,7 +86,7 @@ export default function MonthCalendar({
             date.toLocaleDateString(undefined, { day: 'numeric', month: 'long' }),
             isToday ? 'today' : null,
             entry
-              ? `${formatTime(entry.time)}, ${latenessLabel(diffMinutes(target, entry.time, mode))}`
+              ? `${formatTime(entry.time, hour24)}, ${latenessLabel(diffMinutes(target, entry.time, mode))}`
               : 'no entry',
           ]
             .filter(Boolean)
@@ -132,8 +135,6 @@ export function Legend() {
     </View>
   );
 }
-
-const CELL_WIDTH = `${100 / 7}%` as const;
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

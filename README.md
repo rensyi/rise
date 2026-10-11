@@ -6,10 +6,10 @@ Waking is an exact moment: you wake, you log it. Rise is built around that one
 tap. Bedtime can be tracked too, but it is optional, means "laid in bed" and
 never affects your wake tracking.
 
-> **Status:** first version implemented. Unit tests pass and the Android
-> bundle builds, but the app has not yet been checked on a device. The
-> checklist for that is Task 6, Step 4 of the
-> [implementation plan](docs/superpowers/plans/2026-10-12-rise.md). The
+> **Status:** first version working. The project owner checked it on a
+> phone on 2026-10-12 against the checklist in the
+> [implementation plan](docs/superpowers/plans/2026-10-12-rise.md). The app
+> icons are still placeholders; see [assets/README.md](assets/README.md). The
 > design is in the
 > [design spec](docs/superpowers/specs/2026-10-12-rise-design.md).
 
@@ -34,6 +34,9 @@ npm run typecheck
   colours and stats change only if you turn on "Apply targets to past days".
 - **Fix it later.** Tap any past day to add, change or delete an entry.
 - **Monthly stats.** Days logged, days on time, and average minutes late.
+- **Your clock, your theme.** Times show in 12- or 24-hour format and the app
+  in light or dark. Both follow your phone by default and can be set in
+  Settings.
 - **Bedtime is opt-in.** Turn it on in Settings to get a separate Bedtime view
   with its own target, colours and stats.
 
@@ -95,6 +98,7 @@ App.tsx                      PaperProvider + HomeScreen
 jest.global-setup.js         fixed time zone for tests
 src/
   theme.ts                   palette, light and dark themes
+  theme.test.ts              unit tests
   lib/time.ts                pure logic: levels, labels, month stats
   lib/time.test.ts           unit tests
   storage.ts                 load and save
@@ -103,6 +107,7 @@ src/
   HomeScreen.tsx             the one screen
   components/
     TimeField.tsx
+    TimeField.test.tsx       unit test
     MonthCalendar.tsx
     StatsRow.tsx
     DayDialog.tsx

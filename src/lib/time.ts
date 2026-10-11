@@ -2,11 +2,15 @@ export type Mode = 'wake' | 'bed';
 export type Entry = { time: string; target: string };
 export type Records = Record<string, Entry>;
 export type Level = 1 | 2 | 3 | 4;
+export type TimeFormat = 'device' | '12h' | '24h';
+export type ThemeChoice = 'device' | 'light' | 'dark';
 export type Config = {
   wakeTarget: string;
   bedEnabled: boolean;
   bedTarget: string;
   applyTargetsToPast: boolean;
+  timeFormat: TimeFormat;
+  theme: ThemeChoice;
 };
 export type MonthStats = { logged: number; onTime: number; avgLate: number | null };
 
@@ -15,6 +19,8 @@ export const DEFAULT_CONFIG: Config = {
   bedEnabled: false,
   bedTarget: '22:00',
   applyTargetsToPast: false,
+  timeFormat: 'device',
+  theme: 'device',
 };
 
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -102,6 +108,11 @@ export function shiftMonth(year: number, month: number, delta: number): { year: 
   return { year: date.getFullYear(), month: date.getMonth() };
 }
 
+// Width of one calendar cell; seven make a week row. Kept just under 100/7:
+// at exactly 100/7 the row overflows by a rounding error on some screen widths
+// and the seventh day wraps onto the next line.
+export const CELL_WIDTH = '14.28%';
+
 // Leading nulls pad the first week so day 1 lands under its weekday (Sunday first).
 export function monthCells(year: number, month: number): (number | null)[] {
   const blanks = new Date(year, month, 1).getDay();
@@ -125,13 +136,18 @@ export function removeEntry(records: Records, key: string): Records {
   return rest;
 }
 
-export function formatTime(time: string, locale?: string): string {
+// Formats a stored HH:mm time for display. Done by hand, not with Intl: Intl
+// follows the language region and ignores the phone's own 12/24-hour switch.
+export function formatTime(time: string, hour24: boolean): string {
+  if (hour24) return time;
   const [h, m] = time.split(':').map(Number);
-  return new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: '2-digit' }).format(
-    new Date(2000, 0, 1, h, m),
-  );
+  return `${h % 12 || 12}:${pad(m)} ${h < 12 ? 'AM' : 'PM'}`;
 }
 
-export function uses24Hour(locale?: string): boolean {
-  return !new Intl.DateTimeFormat(locale, { hour: 'numeric' }).resolvedOptions().hour12;
+export function resolveHour24(choice: TimeFormat, deviceHour24: boolean): boolean {
+  return choice === 'device' ? deviceHour24 : choice === '24h';
+}
+
+export function resolveDark(choice: ThemeChoice, deviceDark: boolean): boolean {
+  return choice === 'device' ? deviceDark : choice === 'dark';
 }

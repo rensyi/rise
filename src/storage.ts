@@ -1,8 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { type Config, DEFAULT_CONFIG, type Records, isTime } from './lib/time';
+import {
+  type Config,
+  DEFAULT_CONFIG,
+  type Records,
+  type ThemeChoice,
+  type TimeFormat,
+  isTime,
+} from './lib/time';
 
 const KEYS = { wake: 'rise.wake', bed: 'rise.bed', config: 'rise.config' } as const;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+const TIME_FORMATS: readonly unknown[] = ['device', '12h', '24h'];
+const THEMES: readonly unknown[] = ['device', 'light', 'dark'];
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -40,6 +50,10 @@ export function parseConfig(raw: string | null): Config {
       typeof data.applyTargetsToPast === 'boolean'
         ? data.applyTargetsToPast
         : DEFAULT_CONFIG.applyTargetsToPast,
+    timeFormat: TIME_FORMATS.includes(data.timeFormat)
+      ? (data.timeFormat as TimeFormat)
+      : DEFAULT_CONFIG.timeFormat,
+    theme: THEMES.includes(data.theme) ? (data.theme as ThemeChoice) : DEFAULT_CONFIG.theme,
   };
 }
 
