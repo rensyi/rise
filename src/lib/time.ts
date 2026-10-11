@@ -12,6 +12,7 @@ export type Config = {
   timeFormat: TimeFormat;
   theme: ThemeChoice;
 };
+export type MonthView = { year: number; month: number }; // month is 0-based
 export type MonthStats = { logged: number; onTime: number; avgLate: number | null };
 
 export const DEFAULT_CONFIG: Config = {
@@ -52,6 +53,12 @@ export function bedDateFor(now: Date): string {
 
 export function logDateFor(mode: Mode, now: Date): string {
   return mode === 'bed' ? bedDateFor(now) : dateKey(now);
+}
+
+// True while two moments would log to the same day in both modes. It turns
+// false at midnight (a new day) and at noon (bedtimes start counting for today).
+export function sameLogDay(a: Date, b: Date): boolean {
+  return dateKey(a) === dateKey(b) && bedDateFor(a) === bedDateFor(b);
 }
 
 // Bedtimes cross midnight, so bed mode compares on a noon-to-noon clock.
@@ -103,9 +110,23 @@ export function monthStats(
   };
 }
 
-export function shiftMonth(year: number, month: number, delta: number): { year: number; month: number } {
+export function shiftMonth(year: number, month: number, delta: number): MonthView {
   const date = new Date(year, month + delta, 1);
   return { year: date.getFullYear(), month: date.getMonth() };
+}
+
+export function monthOfKey(key: string): MonthView {
+  const [year, month] = key.split('-').map(Number);
+  return { year, month: month - 1 };
+}
+
+// When "today" moves into a new month, the calendar follows it, but only if it
+// was showing the old current month. A month the user browsed to is left alone.
+export function followMonth(view: MonthView, before: Date, after: Date): MonthView {
+  const moved =
+    before.getFullYear() !== after.getFullYear() || before.getMonth() !== after.getMonth();
+  const showedCurrent = view.year === before.getFullYear() && view.month === before.getMonth();
+  return moved && showedCurrent ? { year: after.getFullYear(), month: after.getMonth() } : view;
 }
 
 // Width of one calendar cell; seven make a week row. Kept just under 100/7:

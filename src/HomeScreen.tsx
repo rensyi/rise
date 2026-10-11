@@ -17,7 +17,18 @@ import DayDialog from './components/DayDialog';
 import MonthCalendar, { Legend } from './components/MonthCalendar';
 import SettingsDialog from './components/SettingsDialog';
 import StatsRow from './components/StatsRow';
-import { type Mode, dateKey, formatTime, logDateFor, monthStats, shiftMonth } from './lib/time';
+import {
+  type Mode,
+  type MonthView,
+  dateKey,
+  followMonth,
+  formatTime,
+  logDateFor,
+  monthOfKey,
+  monthStats,
+  sameLogDay,
+  shiftMonth,
+} from './lib/time';
 import { palette } from './theme';
 import type { Rise } from './useRise';
 
@@ -26,17 +37,32 @@ export default function HomeScreen({ rise }: { rise: Rise }) {
   const insets = useSafeAreaInsets();
   const [now, setNow] = useState(() => new Date());
   const [picked, setPicked] = useState<Mode>('wake');
-  const [view, setView] = useState(() => ({ year: now.getFullYear(), month: now.getMonth() }));
+  const [view, setView] = useState<MonthView>(() => ({
+    year: now.getFullYear(),
+    month: now.getMonth(),
+  }));
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // The app is often left open overnight: refresh "today" when it returns to the foreground.
+  // The app is often left open overnight. "Today" is re-checked when the app
+  // returns to the foreground and once a minute while it stays on screen, and
+  // the calendar follows today into a new month.
   useEffect(() => {
+    const refresh = () => {
+      const fresh = new Date();
+      if (sameLogDay(now, fresh)) return;
+      setView((current) => followMonth(current, now, fresh));
+      setNow(fresh);
+    };
     const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') setNow(new Date());
+      if (state === 'active') refresh();
     });
-    return () => subscription.remove();
-  }, []);
+    const timer = setInterval(refresh, 60_000);
+    return () => {
+      subscription.remove();
+      clearInterval(timer);
+    };
+  }, [now]);
 
   const screen = [styles.screen, { backgroundColor: theme.colors.background }];
 
@@ -112,7 +138,10 @@ export default function HomeScreen({ rise }: { rise: Rise }) {
           label={mode === 'wake' ? "I'm up" : 'In bed'}
           style={[styles.fab, { bottom: 16 + insets.bottom }]}
           onPress={() => {
-            setNow(new Date());
+            const fresh = new Date();
+            setNow(fresh);
+            // Show the month the entry lands in.
+            setView(monthOfKey(logDateFor(mode, fresh)));
             rise.logNow(mode);
           }}
         />
@@ -143,7 +172,11 @@ export default function HomeScreen({ rise }: { rise: Rise }) {
         visible={settingsOpen}
         config={rise.config}
         hour24={rise.hour24}
-        onChange={rise.setConfig}
+        onChange={(next) => {
+          // Turning bedtime tracking off always returns to Wake, even if it is turned on again.
+          if (!next.bedEnabled) setPicked('wake');
+          rise.setConfig(next);
+        }}
         onDismiss={() => setSettingsOpen(false)}
       />
 

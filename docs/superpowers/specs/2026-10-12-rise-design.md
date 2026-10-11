@@ -85,6 +85,13 @@ is computed: a time before 12:00 has 24 hours added. A 22:00 target and a
 00:30 entry give `diff = 150`. A 01:00 target and a 00:30 entry give
 `diff = −30`.
 
+**Following today.** The app re-checks the date when it returns to the
+foreground and once a minute while it stays on screen, so today's outline
+and the log button are right after midnight and after noon. When today moves
+into a new month, the calendar moves with it if it was showing the old
+current month; a month the user browsed to is left alone. Logging with the
+button always shows the month the entry lands in.
+
 **Appearance.** Colours are specified in 3.5. Today's tile has an outline.
 Future days are dimmed and not tappable. Each tile's accessibility label
 states the date, the logged time and the lateness label, so colour is never
@@ -128,7 +135,7 @@ A dialog opened from the top app bar:
 The dialog scrolls, so every setting stays reachable on a short screen.
 
 Turning Track bedtime off hides the mode switch and returns Home to Wake
-mode. Bedtime entries are kept and reappear when it is turned back on.
+mode; turning it on again starts in Wake mode. Bedtime entries are kept and reappear when it is turned back on.
 
 "Apply targets to past days" is one switch covering both modes. It only
 selects which target each mode's own entries are compared with; it does not
@@ -230,7 +237,8 @@ Rise is a habit tracker, not medical advice.
 Expo (React Native, TypeScript), one screen, no navigation library.
 
 ```
-App.tsx                      PaperProvider + HomeScreen
+App.tsx                      state, theme selection, HomeScreen
+App.test.tsx                 whole-app test
 jest.global-setup.js         fixed time zone for tests
 src/theme.ts                 palette, light and dark themes, tile opacities
 src/theme.test.ts            unit tests
@@ -342,7 +350,17 @@ bugs fail on every machine.
 `lib/time.ts` also checks that seven calendar cells total just under 100%
 of the row, so the seventh day cannot wrap on any screen width.
 
-The remaining components and the home screen are checked by running the app.
+`App.test.tsx` mounts the whole app, with only storage, the device's
+12/24-hour switch, the icon font and the time picker replaced, and drives:
+
+- first run
+- one-tap logging
+- opening and deleting a day
+- bedtime tracking on, off and on again
+- the time format and theme settings
+- an app left open overnight into a new month
+
+Layout and colour are checked by running the app.
 
 ## 9. Out of scope
 

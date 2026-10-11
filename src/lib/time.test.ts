@@ -6,17 +6,20 @@ import {
   dateKey,
   diffMinutes,
   effectiveTarget,
+  followMonth,
   formatTime,
   isTime,
   latenessLabel,
   level,
   logDateFor,
   monthCells,
+  monthOfKey,
   monthStats,
   parseTime,
   removeEntry,
   resolveDark,
   resolveHour24,
+  sameLogDay,
   shiftMonth,
   timeOf,
   upsertEntry,
@@ -291,5 +294,55 @@ describe('resolveDark', () => {
   test('an explicit choice overrides the device', () => {
     expect(resolveDark('light', true)).toBe(false);
     expect(resolveDark('dark', false)).toBe(true);
+  });
+});
+
+describe('sameLogDay', () => {
+  test('true within one morning or one afternoon', () => {
+    expect(sameLogDay(new Date(2026, 9, 12, 6, 0), new Date(2026, 9, 12, 11, 59))).toBe(true);
+    expect(sameLogDay(new Date(2026, 9, 12, 13, 0), new Date(2026, 9, 12, 23, 59))).toBe(true);
+  });
+
+  test('false across midnight, when a new day starts', () => {
+    expect(sameLogDay(new Date(2026, 9, 12, 23, 59), new Date(2026, 9, 13, 0, 1))).toBe(false);
+  });
+
+  test('false across noon, when a bedtime starts counting for today', () => {
+    expect(sameLogDay(new Date(2026, 9, 12, 11, 59), new Date(2026, 9, 12, 12, 1))).toBe(false);
+  });
+});
+
+describe('monthOfKey', () => {
+  test('returns the year and 0-based month of a date key', () => {
+    expect(monthOfKey('2026-10-31')).toEqual({ year: 2026, month: 9 });
+    expect(monthOfKey('2027-01-01')).toEqual({ year: 2027, month: 0 });
+  });
+});
+
+describe('followMonth', () => {
+  const october = { year: 2026, month: 9 };
+
+  test('follows today into a new month when showing the old current month', () => {
+    expect(followMonth(october, new Date(2026, 9, 31, 23, 0), new Date(2026, 10, 1, 6, 0))).toEqual({
+      year: 2026,
+      month: 10,
+    });
+  });
+
+  test('crosses a year', () => {
+    const december = { year: 2026, month: 11 };
+    expect(followMonth(december, new Date(2026, 11, 31), new Date(2027, 0, 1))).toEqual({
+      year: 2027,
+      month: 0,
+    });
+  });
+
+  test('stays put when the user was browsing another month', () => {
+    const august = { year: 2026, month: 7 };
+    expect(followMonth(august, new Date(2026, 9, 31), new Date(2026, 10, 1))).toBe(august);
+  });
+
+  test('stays put when the month has not changed', () => {
+    expect(followMonth(october, new Date(2026, 9, 12), new Date(2026, 9, 13))).toBe(october);
   });
 });

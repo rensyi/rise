@@ -94,7 +94,8 @@ cause, and Rise is a habit tracker, not medical advice.
 ## Structure
 
 ```
-App.tsx                      PaperProvider + HomeScreen
+App.tsx                      state, theme selection, HomeScreen
+App.test.tsx                 whole-app test
 jest.global-setup.js         fixed time zone for tests
 src/
   theme.ts                   palette, light and dark themes
