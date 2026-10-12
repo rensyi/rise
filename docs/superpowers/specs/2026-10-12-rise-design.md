@@ -4,7 +4,9 @@ Date: 2026-10-12
 Status: approved 2026-10-12; sections 3.5, 5, 7 and 8 amended while writing
 the implementation plan (`docs/superpowers/plans/2026-10-12-rise.md`);
 sections 3.4, 3.5, 5 and 6 amended after device testing the same day (time
-format and theme settings)
+format and theme settings); section 3.5 rewritten for the Ink and gold palette and
+Rubik font; sections 3.1, 3.3, 3.4 and 5 rewritten for the three-screen
+Material 3 Expressive layout
 
 ## 1. Purpose
 
@@ -33,24 +35,42 @@ chose.
 
 ## 3. Features
 
-### 3.1 Home screen
+### 3.1 Screens
 
-The only screen. Top to bottom:
+The app has three places, reached from a floating bar at the bottom: **Today**,
+**Calendar** and **Settings**. There is no navigation library; the bar switches
+which one is drawn. On Android, the back button returns to Today before it
+leaves the app. The look follows Material 3 Expressive (3.5).
 
-- **Top app bar** — title "Rise", settings icon on the right.
-- **Mode switch** — a Wake / Bedtime segmented button. Shown only when bedtime
-  tracking is enabled (3.4). Wake is selected on launch.
-- **Target chip** — "Target wake-up 06:00" (or "Target bedtime 22:00"),
-  showing the current target.
+When bedtime tracking is on (3.4), Today and Calendar both show **Wake** and
+**Bedtime** pill tabs under the title. They share one selection.
+
+**Today** is where the app opens.
+
+- **Title** — the weekday in large type, with the date under it.
+- **The log button** — one large gold button: a sun shape reading "I'm up" in
+  Wake mode, a plain disc reading "In bed" in Bedtime mode. Under the label
+  it shows the current target.
+- **After logging** — the button is replaced by a card with "You got up at"
+  (or "You went to bed at"), the time in large type, and the lateness label.
+- **Last few days** — four rows, the day a tap would log to and the three
+  before it, each with its time and lateness label or "No entry". Tapping a
+  row opens the day sheet (3.3).
+
+**Calendar** shows one month.
+
+- **Title** — the month in large type, the year under it, and two round
+  buttons for the previous and next month.
 - **Stats row** — three cards for the viewed month and current mode:
   - *Logged* — number of days with an entry.
-  - *On time* — number of level 4 days.
+  - *On time* — number of level 4 days. This card is a gold pill.
   - *Avg late* — mean of `max(0, diff)` in minutes over logged days, shown as
     `+18m`, `0m`, or `—` when nothing is logged.
-- **Month calendar** — previous/next arrows, month and year, weekday header
-  starting on Sunday, and one tile per day (3.2).
+- **Month grid** — a weekday header starting on Sunday and one round tile per
+  day (3.2), on a panel.
 - **Legend** — the four colour levels with their labels.
-- **Extended FAB** — "I'm up" in Wake mode, "In bed" in Bedtime mode (3.3).
+
+**Settings** is described in 3.4.
 
 ### 3.2 Calendar tiles
 
@@ -75,9 +95,10 @@ affects new entries only: past tiles and past stats stay as they were. When
 **Apply targets to past days** is on (3.4), every day is measured against the
 current target instead. Levels and stats always use the same rule.
 
-**Lateness label**, used in the day dialog and accessibility labels:
-`On time` (diff 0), `12m early`, `45m late`, and `2.5h late` from 120 minutes
-up.
+**Lateness label**, used on Today, in the day sheet and in accessibility labels:
+`On time` (diff 0), `12mins early`, `45mins late`, `1hr late`,
+`2hrs 30mins late`. Under an hour it is given in minutes; from an hour up, in
+hours and minutes. Times are stored to the minute, so there are no seconds.
 
 **Bedtime comparison.** Bedtimes cross midnight, so in Bedtime mode both the
 logged time and the target are placed on a noon-to-noon clock before `diff`
@@ -99,17 +120,24 @@ the only signal.
 
 ### 3.3 Logging
 
-- **One tap.** The FAB saves the current local time as `HH:mm`, together with
-  the current target.
+- **One tap.** The log button on Today saves the current local time as
+  `HH:mm`, together with the current target.
   - "I'm up" saves under today's date.
   - "In bed" saves under today's date, or under yesterday's date when tapped
     before 12:00, so a 01:00 bedtime belongs to the night before.
-  - The FAB is hidden when the day it would write to already has an entry.
+  - The button is replaced by the result card when the day it would write to
+    already has an entry.
   - A snackbar confirms: "Logged 06:12".
-- **Edit, backfill, delete.** Tapping today or any past day opens the day
-  dialog: the date, the target the day is measured against, a time field that
-  opens the Material 3 time picker, a live preview of the level colour and
-  lateness label, and Save / Delete / Cancel.
+- **Edit, backfill, delete.** Tapping a calendar tile for today or any past
+  day, or a row on Today, opens the day sheet, which slides up from the
+  bottom. From the top: the title, the date, the lateness label, the time in
+  large type (tapping it opens the Material 3 time picker), and the actions.
+  The label sits at the left, only as wide as its text, in the level's
+  colour. Delete sits at the far left in red, with Cancel and Save at the
+  right.
+  - The sheet does not show the target. With "Apply targets to past days"
+    off, a past day can be measured against an older target than the current
+    one, and the sheet does not say which.
   - Delete appears only when the day has an entry.
   - A new entry starts at the current target time and stores the current
     target.
@@ -118,7 +146,8 @@ the only signal.
 
 ### 3.4 Settings
 
-A dialog opened from the top app bar:
+A page of grouped rows, in three groups: Wake-up, Bedtime and Display. Every
+change applies at once.
 
 - **Target wake-up time** — default 06:00.
 - **Apply targets to past days** — switch, default off. Off: each day is
@@ -132,67 +161,85 @@ A dialog opened from the top app bar:
 - **Theme** — Device, Light or Dark; default Device. Device follows the
   phone's light or dark mode.
 
-The dialog scrolls, so every setting stays reachable on a short screen.
-
-Turning Track bedtime off hides the mode switch and returns Home to Wake
-mode; turning it on again starts in Wake mode. Bedtime entries are kept and reappear when it is turned back on.
+Turning Track bedtime off hides the Wake and Bedtime tabs and returns the app
+to Wake mode; turning it on again starts in Wake mode. Bedtime entries are kept and reappear when it is turned back on.
 
 "Apply targets to past days" is one switch covering both modes. It only
 selects which target each mode's own entries are compared with; it does not
 link wake and bedtime.
 
-### 3.5 Theme and colour
+### 3.5 Theme, colour and type
 
 The Theme setting (3.4) picks light or dark; by default it follows the
-system setting. Both themes are built from one
-palette:
+system setting. The palette is "Ink and gold": warm paper and ink, one gold,
+and a red for Delete. Every colour is taken from Flexoki by Steph Ango
+(https://stephango.com/flexoki, MIT licence), a published palette tuned to
+keep its colour relationships between light and dark. It was chosen by the
+owner on 2026-10-12 from three researched options, replacing an earlier
+lavender palette and a monochrome one.
 
-| Name | Hex | Light theme | Dark theme |
-|---|---|---|---|
-| Lavender | `#A996E0` | primary: buttons, FAB, tiles | same |
-| Lilac haze | `#E4DCF7` | cards | secondary text |
-| Morning mist | `#F7F4FD` | background | main text |
-| Deep plum | `#2E2645` | main text | background |
-| Peach blush | `#F4B49A` | highlight fill: target chip | same |
-| Butter sun | `#F3D68A` | win fill: On time card | same |
-| Muted purple | `#6B5FA0` | secondary text on background | not used |
-
-Rules that follow from measured contrast ratios (WCAG AA needs 4.5:1 for
-text):
-
-- **Text on Lavender, Peach blush and Butter sun is always Deep plum**
-  (5.5:1, 8.0:1, 10.0:1). White on Lavender is 2.6:1 and is not used.
-- **Peach blush and Butter sun are fills only**, never text or thin lines.
-  They are too light to read on light surfaces (1.6:1 and 1.1:1).
-- **Muted purple is used only on the Morning mist background** (5.1:1). On
-  Lilac haze cards it is 4.2:1, so card text is Deep plum.
-- **Dark theme secondary text is Lilac haze**, because Muted purple on Deep
-  plum is 2.6:1.
-- **Dark theme cards are `#3D3358`** — Lavender at 12% over Deep plum, the
-  Material 3 way of tinting a raised surface. This is the only colour not in
-  the palette; Lilac haze cards on a Deep plum background would glare.
-- **Lavender is never used as text on light surfaces** (2.4:1 on Morning
-  mist). Text-only buttons use the main text colour, and in the light theme
-  the time picker, which draws its own text in the primary colour, is given
-  Muted purple as its primary.
-- **The time picker's own surface is the screen background colour**, not the
-  card colour, in both themes. The picker draws its clock face in the card
-  colour, so on a card-coloured surface the face would be invisible and its
-  text would fall to 4.2:1 (light) and 4.5:1 (dark).
-
-**Tiles** are Lavender over the background at four opacities:
-
-| Level | Opacity | Day number colour |
+| | Dark | Light |
 |---|---|---|
-| 4 | 1.0 | Deep plum |
-| 3 | 0.55 | main text |
-| 2 | 0.35 | main text |
-| 1 | 0.18 | main text |
+| Background | `#100F0F` | `#FFFCF0` |
+| Cards and dialogs | `#1C1B1A` | `#F2F0E5` |
+| Main text ("ink") | `#CECDC3` | `#100F0F` |
+| Secondary text | `#878580` | `#575653` |
+| Empty-tile border, clock face | `#343331` | `#DAD8CE` |
+| Delete | `#E8705F` | `#AF3029` |
+
+**Tiles.** Each level has one fixed fill and day-number colour, the same in
+both themes, so a day looks identical whichever theme is on.
+
+| Level | Fill | Number |
+|---|---|---|
+| 4 | `#D0A215` | `#100F0F` |
+| 3 | `#AD8301` | `#100F0F` |
+| 2 | `#664D01` | `#CECDC3` |
+| 1 | `#3A2D04` | `#CECDC3` |
 | 0 | none | main text |
 
-Every tile and number pairing is at least 4.8:1 in both themes. The four
-opacities are constants in one place so they can be tuned on a real device.
+On the dark background, on time is the brightest tile and the latest fades
+into the background. On the light background the same colours read the other
+way round: the latest days are the darkest and most prominent. The owner
+chose identical colours over identical emphasis.
+
 Today's outline uses the main text colour.
+
+**Where each colour goes.**
+
+- **Gold** (`#D0A215`, with `#100F0F` text) is kept for results and for
+  logging: tiles, the "On time" stat card, the lateness label, the "I'm up"
+  and "In bed" buttons, and the selected field in the time picker.
+- **Ink** (the main text colour, with the background colour on top) is used
+  for Save, Done and the time buttons, switches, and the selected segment.
+- **Red** appears only on Delete.
+- The time picker sits on the card colour like the other dialogs, with its
+  clock face in the border tone so the face stays visible.
+
+**Contrast.** Every text and number pairing above is at least 4.5:1.
+`src/theme.test.ts` checks each pairing and that every painted colour is one
+of the Flexoki values listed in it.
+
+**Shape and layers.** The look follows Material 3 Expressive, Google's public
+design language.
+
+- **Large titles.** Each screen opens with its title in large Rubik medium.
+- **Pills and circles.** Buttons, tabs, choices, the lateness label and the
+  "On time" card are pills; calendar tiles and the month arrows are circles.
+- **Three layers.** The background, then panels in the card colour, then rows
+  on a panel in a third tone (`#282726` dark, `#E6E4D9` light, also from
+  Flexoki). Rows in a group are separate rounded cards; the first and last
+  take larger outer corners.
+- **A floating bottom bar**, clear of the screen edges, with a pill behind
+  the active item.
+- **One playful shape.** The wake button is Material's "sunny" shape, built
+  from three overlapping rounded squares. Nothing else uses a novelty shape.
+- The time picker is a ready-made component and keeps its standard look.
+
+**Type.** All text is Rubik (Google Fonts, Open Font License), in regular and
+medium weights, loaded when the app starts. The app waits for the font so
+text does not jump; if the font fails to load, the app opens in the system
+font.
 
 **Times** are shown as `6:05 AM` or `06:05` according to the Time format
 setting (3.4), and the time picker uses the same mode. Formatting is done in
@@ -234,27 +281,37 @@ Rise is a habit tracker, not medical advice.
 
 ## 5. Architecture
 
-Expo (React Native, TypeScript), one screen, no navigation library.
+Expo (React Native, TypeScript), three screens switched by a bottom bar, no
+navigation library.
 
 ```
-App.tsx                      state, theme selection, HomeScreen
+App.tsx                      state, theme selection, font loading, Shell
 App.test.tsx                 whole-app test
 jest.global-setup.js         fixed time zone for tests
-src/theme.ts                 palette, light and dark themes, tile opacities
+src/theme.ts                 colours, font, light and dark themes
 src/theme.test.ts            unit tests
 src/lib/time.ts              pure logic, no React, no storage
 src/lib/time.test.ts         unit tests
 src/storage.ts               parse, load, save
 src/storage.test.ts          unit tests
 src/useRise.ts               state hook
-src/HomeScreen.tsx           screen layout
+src/Shell.tsx                shared screen state, bottom bar, day sheet
+src/screens/
+  TodayScreen.tsx            log button or result, last few days
+  CalendarScreen.tsx         month title, stats, grid, legend
+  SettingsScreen.tsx         grouped settings rows
 src/components/
-  TimeField.tsx              time button + time picker, used by both dialogs
+  BigTitle.tsx               large screen title with optional round tools
+  Panel.tsx                  panel, grouped rows, row
+  Pills.tsx                  row of pills with one selected
+  SunButton.tsx              the log button
+  LatenessPill.tsx           "12mins late" in the tile's colour
+  NavBar.tsx                 floating bottom bar
+  DaySheet.tsx               add, edit, delete one day
+  TimeField.tsx              time button or large time + time picker
   TimeField.test.tsx         unit test
   MonthCalendar.tsx          grid of tiles, legend
   StatsRow.tsx               three stat cards
-  DayDialog.tsx              add, edit, delete one day
-  SettingsDialog.tsx         targets and switches
 ```
 
 | Unit | Does | Depends on |
@@ -262,6 +319,8 @@ src/components/
 | `lib/time.ts` | `parseTime`, `dateKey`, `effectiveTarget(entry, currentTarget, applyToPast)`, `level(target, logged, mode)`, `latenessLabel`, `monthStats`, `bedDateFor(now)`, entry helpers, time formatting | nothing |
 | `storage.ts` | `load()` returns `{wake, bed, config}`; `saveWake`, `saveBed`, `saveConfig`; `persist` (save, revert on failure) | AsyncStorage |
 | `useRise.ts` | holds state, exposes `logNow`, `setEntry`, `deleteEntry`, `setConfig` | `storage.ts`, `lib/time.ts` |
+| `Shell.tsx` | holds what the screens share: the date, the mode, the month in view, the open day, the active screen | `useRise.ts`, screens |
+| screens | lay out one place each from props | components, `lib/time.ts` |
 | components | render props, call callbacks | `lib/time.ts`, `theme.ts`, Paper |
 
 `level` and `monthStats` take one mode's entries and one mode's target.
@@ -277,11 +336,12 @@ principle 2 is enforced.
 - Runtime support for the above: `react-native-safe-area-context`,
   `@expo/vector-icons`, `expo-font`, `expo-system-ui`, `expo-status-bar`
 - `expo-localization` — reads the phone's 12/24-hour switch
+- `@expo-google-fonts/rubik` — the Rubik font files
 - Development only: `jest-expo`, `jest`, `@types/jest`,
   `react-test-renderer`, `@types/react-test-renderer`
 
 **Theme.** `src/theme.ts` extends Paper's Material 3 light and dark themes
-with the palette in 3.5, written out by hand. No runtime colour generation
+with the greys and font in 3.5, written out by hand. No runtime colour generation
 and no theming dependency. Material 3 roles not named in 3.5 (outline, error
 and the like) keep Paper's defaults unless they clash on a real device.
 
@@ -353,12 +413,15 @@ of the row, so the seventh day cannot wrap on any screen width.
 `App.test.tsx` mounts the whole app, with only storage, the device's
 12/24-hour switch, the icon font and the time picker replaced, and drives:
 
-- first run
-- one-tap logging
-- opening and deleting a day
+- first run on Today
+- one-tap logging and the result card
+- the calendar's month, stats and tiles
+- the day sheet's order, its red Delete, and deleting a day
+- opening a day from the list on Today
 - bedtime tracking on, off and on again
 - the time format and theme settings
 - an app left open overnight into a new month
+- font loading, slow and failed
 
 Layout and colour are checked by running the app.
 
@@ -372,6 +435,7 @@ multiple entries per day.
 
 `docs/prototype/rise-tracker.jsx` is the web prototype this design grew
 from. It stays as a reference. It differs from this spec in these ways: six
-grey lateness steps instead of four Lavender levels, a fixed dark look
-instead of the palette, bedtime always visible, no one-tap logging, target
+grey lateness steps instead of four gold ones, a dark look only with no light
+theme,
+DM Mono and DM Serif Display instead of Rubik, bedtime always visible, no one-tap logging, target
 changes re-colouring all history, and silent save failures.

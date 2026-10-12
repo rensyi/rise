@@ -12,5 +12,5 @@ with real artwork at the same file name and size before release.
 | `favicon.png` | 48×48 | The browser-tab icon, used only if the app is run on the web | `app.json` → `expo.web.favicon` |
 | `splash-icon.png` | 1024×1024, transparent background | The image for the launch (splash) screen. Not wired up yet: nothing in `app.json` refers to it | nothing yet |
 
-`app.json` also sets `expo.android.adaptiveIcon.backgroundColor` to `#E4DCF7`
-(Lilac haze), the colour shown if the background image is missing.
+`app.json` also sets `expo.android.adaptiveIcon.backgroundColor` to `#EFEFEF`,
+the colour shown if the background image is missing.

@@ -75,11 +75,18 @@ export function level(target: string, logged: string, mode: Mode): Level {
   return 1;
 }
 
+// "45mins", "1hr", "2hrs 30mins". Times are stored to the minute, so there are no seconds.
+export function formatDuration(minutes: number): string {
+  const plural = (n: number, unit: string) => `${n}${unit}${n === 1 ? '' : 's'}`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours === 0) return plural(rest, 'min');
+  return rest === 0 ? plural(hours, 'hr') : `${plural(hours, 'hr')} ${plural(rest, 'min')}`;
+}
+
 export function latenessLabel(diff: number): string {
   if (diff === 0) return 'On time';
-  if (diff < 0) return `${-diff}m early`;
-  if (diff < 120) return `${diff}m late`;
-  return `${Math.round(diff / 6) / 10}h late`;
+  return `${formatDuration(Math.abs(diff))} ${diff < 0 ? 'early' : 'late'}`;
 }
 
 export function effectiveTarget(entry: Entry, currentTarget: string, applyToPast: boolean): string {
@@ -113,6 +120,12 @@ export function monthStats(
 export function shiftMonth(year: number, month: number, delta: number): MonthView {
   const date = new Date(year, month + delta, 1);
   return { year: date.getFullYear(), month: date.getMonth() };
+}
+
+// A day and the days before it, newest first.
+export function recentKeys(endKey: string, count: number): string[] {
+  const [year, month, day] = endKey.split('-').map(Number);
+  return Array.from({ length: count }, (_, i) => dateKey(new Date(year, month - 1, day - i)));
 }
 
 export function monthOfKey(key: string): MonthView {

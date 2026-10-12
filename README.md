@@ -24,7 +24,8 @@ npm run typecheck
 
 ## How it works
 
-- **One tap to log.** Press **I'm up** and the current time is saved for today.
+- **One tap to log.** The app opens on Today with one big sun-shaped button.
+  Press **I'm up** and the current time is saved for today.
 - **The calendar is the heat map.** Each day is coloured by how close you woke
   to your target, like GitHub's contribution tiles, but on the calendar days
   themselves.
@@ -32,6 +33,8 @@ npm run typecheck
   and a 09:00 wake-up gets the strongest colour.
 - **The past stays put.** Changing your target affects new days only. Past
   colours and stats change only if you turn on "Apply targets to past days".
+- **Three places.** Today for logging, Calendar for the month, and Settings,
+  on a floating bar at the bottom.
 - **Fix it later.** Tap any past day to add, change or delete an entry.
 - **Monthly stats.** Days logged, days on time, and average minutes late.
 - **Your clock, your theme.** Times show in 12- or 24-hour format and the app
@@ -50,17 +53,21 @@ npm run typecheck
 | Faint | more than 60 min after | after 07:00 |
 | Empty | not logged | — |
 
-### Colours
+### Look
 
-| Name | Hex | Used for |
+"Ink and gold": warm paper and ink with one gold, in a dark and a light
+theme, set in Rubik. The colours are from
+[Flexoki](https://stephango.com/flexoki) by Steph Ango.
+
+| | Dark | Light |
 |---|---|---|
-| Lavender | `#A996E0` | buttons, tiles |
-| Lilac haze | `#E4DCF7` | cards (light), secondary text (dark) |
-| Morning mist | `#F7F4FD` | background (light), text (dark) |
-| Deep plum | `#2E2645` | text (light), background (dark) |
-| Peach blush | `#F4B49A` | highlights |
-| Butter sun | `#F3D68A` | wins |
-| Muted purple | `#6B5FA0` | secondary text (light) |
+| Background | `#100F0F` | `#FFFCF0` |
+| Cards | `#1C1B1A` | `#F2F0E5` |
+| Text | `#CECDC3` | `#100F0F` |
+| Secondary text | `#878580` | `#575653` |
+
+Tiles are the same in both themes, from on time to latest:
+`#D0A215`, `#AD8301`, `#664D01`, `#3A2D04`.
 
 ## Why 06:00
 
@@ -94,25 +101,25 @@ cause, and Rise is a habit tracker, not medical advice.
 ## Structure
 
 ```
-App.tsx                      state, theme selection, HomeScreen
+App.tsx                      state, theme selection, font loading, Shell
 App.test.tsx                 whole-app test
 jest.global-setup.js         fixed time zone for tests
 src/
-  theme.ts                   palette, light and dark themes
+  theme.ts                   colours, font, light and dark themes
   theme.test.ts              unit tests
   lib/time.ts                pure logic: levels, labels, month stats
   lib/time.test.ts           unit tests
   storage.ts                 load and save
   storage.test.ts            unit tests
   useRise.ts                 state hook
-  HomeScreen.tsx             the one screen
+  Shell.tsx                  shared screen state, bottom bar, day sheet
+  screens/
+    TodayScreen.tsx          log button or result, last few days
+    CalendarScreen.tsx       month, stats, tiles
+    SettingsScreen.tsx       grouped settings
   components/
-    TimeField.tsx
-    TimeField.test.tsx       unit test
-    MonthCalendar.tsx
-    StatsRow.tsx
-    DayDialog.tsx
-    SettingsDialog.tsx
+    BigTitle.tsx  Panel.tsx  Pills.tsx  SunButton.tsx  LatenessPill.tsx
+    NavBar.tsx  DaySheet.tsx  TimeField.tsx  MonthCalendar.tsx  StatsRow.tsx
 assets/                      placeholder icons; see assets/README.md
 docs/superpowers/specs/      design spec
 docs/superpowers/plans/      implementation plan

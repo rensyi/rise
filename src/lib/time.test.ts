@@ -16,6 +16,7 @@ import {
   monthOfKey,
   monthStats,
   parseTime,
+  recentKeys,
   removeEntry,
   resolveDark,
   resolveHour24,
@@ -121,13 +122,24 @@ describe('diffMinutes in bed mode', () => {
 });
 
 describe('latenessLabel', () => {
-  test('covers early, on time, minutes late and hours late', () => {
-    expect(latenessLabel(-12)).toBe('12m early');
+  test('on time', () => {
     expect(latenessLabel(0)).toBe('On time');
-    expect(latenessLabel(45)).toBe('45m late');
-    expect(latenessLabel(119)).toBe('119m late');
-    expect(latenessLabel(120)).toBe('2h late');
-    expect(latenessLabel(150)).toBe('2.5h late');
+  });
+
+  test('under an hour is given in minutes', () => {
+    expect(latenessLabel(1)).toBe('1min late');
+    expect(latenessLabel(30)).toBe('30mins late');
+    expect(latenessLabel(59)).toBe('59mins late');
+    expect(latenessLabel(-12)).toBe('12mins early');
+  });
+
+  test('an hour or more is given in hours and minutes', () => {
+    expect(latenessLabel(60)).toBe('1hr late');
+    expect(latenessLabel(61)).toBe('1hr 1min late');
+    expect(latenessLabel(90)).toBe('1hr 30mins late');
+    expect(latenessLabel(120)).toBe('2hrs late');
+    expect(latenessLabel(150)).toBe('2hrs 30mins late');
+    expect(latenessLabel(-570)).toBe('9hrs 30mins early');
   });
 });
 
@@ -344,5 +356,16 @@ describe('followMonth', () => {
 
   test('stays put when the month has not changed', () => {
     expect(followMonth(october, new Date(2026, 9, 12), new Date(2026, 9, 13))).toBe(october);
+  });
+});
+
+describe('recentKeys', () => {
+  test('lists a day and the days before it, newest first', () => {
+    expect(recentKeys('2026-10-12', 4)).toEqual(['2026-10-12', '2026-10-11', '2026-10-10', '2026-10-09']);
+  });
+
+  test('crosses month and year boundaries', () => {
+    expect(recentKeys('2026-11-01', 2)).toEqual(['2026-11-01', '2026-10-31']);
+    expect(recentKeys('2027-01-01', 2)).toEqual(['2027-01-01', '2026-12-31']);
   });
 });

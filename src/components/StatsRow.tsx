@@ -1,29 +1,35 @@
 import { StyleSheet, View } from 'react-native';
 import { type MD3Theme, Surface, Text, useTheme } from 'react-native-paper';
 import type { MonthStats } from '../lib/time';
-import { palette } from '../theme';
+import { tileColor, tileTextColor } from '../theme';
 
 type Props = { stats: MonthStats };
 
 export default function StatsRow({ stats }: Props) {
   const theme = useTheme<MD3Theme>();
-  const card = { bg: theme.colors.elevation.level1, fg: theme.colors.onSurface };
+  const card = { bg: theme.colors.elevation.level1, fg: theme.colors.onSurface, round: false };
   const avgLate = stats.avgLate === null ? '—' : stats.avgLate === 0 ? '0m' : `+${stats.avgLate}m`;
   const cards = [
     { label: 'Logged', value: String(stats.logged), ...card },
-    // Butter sun marks wins. It is a fill only: text on it is always deep plum.
-    { label: 'On time', value: String(stats.onTime), bg: palette.butterSun, fg: palette.deepPlum },
+    // Wins take the gold of an on-time tile and a full pill shape.
+    {
+      label: 'On time',
+      value: String(stats.onTime),
+      bg: tileColor(4),
+      fg: tileTextColor(4, theme),
+      round: true,
+    },
     { label: 'Avg late', value: avgLate, ...card },
   ];
 
   return (
     <View style={styles.row}>
-      {cards.map(({ label, value, bg, fg }) => (
+      {cards.map(({ label, value, bg, fg, round }) => (
         <Surface
           key={label}
           mode="flat"
           elevation={0}
-          style={[styles.card, { backgroundColor: bg }]}
+          style={[styles.card, round && styles.round, { backgroundColor: bg }]}
           accessible
           accessibilityLabel={`${label}: ${value}`}
         >
@@ -41,5 +47,6 @@ export default function StatsRow({ stats }: Props) {
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 8 },
-  card: { flex: 1, alignItems: 'center', paddingVertical: 12, borderRadius: 12 },
+  card: { flex: 1, alignItems: 'center', paddingVertical: 14, borderRadius: 24 },
+  round: { borderRadius: 999 },
 });

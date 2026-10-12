@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import { IconButton, type MD3Theme, Text, TouchableRipple, useTheme } from 'react-native-paper';
+import { type MD3Theme, Text, TouchableRipple, useTheme } from 'react-native-paper';
 import {
   CELL_WIDTH,
   type Level,
@@ -32,8 +32,6 @@ type Props = {
   applyToPast: boolean;
   hour24: boolean;
   todayKey: string;
-  onPrev: () => void;
-  onNext: () => void;
   onSelectDay: (key: string) => void;
 };
 
@@ -46,23 +44,12 @@ export default function MonthCalendar({
   applyToPast,
   hour24,
   todayKey,
-  onPrev,
-  onNext,
   onSelectDay,
 }: Props) {
   const theme = useTheme<MD3Theme>();
-  const title = new Date(year, month, 1).toLocaleDateString(undefined, {
-    month: 'long',
-    year: 'numeric',
-  });
 
   return (
     <View>
-      <View style={styles.header}>
-        <IconButton icon="chevron-left" accessibilityLabel="Previous month" onPress={onPrev} />
-        <Text variant="titleMedium">{title}</Text>
-        <IconButton icon="chevron-right" accessibilityLabel="Next month" onPress={onNext} />
-      </View>
       <View style={styles.grid}>
         {WEEKDAYS.map((name, i) => (
           <View key={`weekday-${i}`} style={styles.weekday}>
@@ -137,13 +124,12 @@ export function Legend() {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   weekday: { width: CELL_WIDTH, alignItems: 'center', paddingVertical: 4 },
   cell: { width: CELL_WIDTH, aspectRatio: 1, padding: 2 },
-  tile: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 8, borderWidth: 1 },
+  tile: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 999, borderWidth: 1 },
   future: { opacity: 0.38 },
   legend: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  swatch: { width: 12, height: 12, borderRadius: 3 },
+  swatch: { width: 12, height: 12, borderRadius: 6 },
 });
