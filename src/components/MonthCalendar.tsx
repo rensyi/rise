@@ -14,6 +14,7 @@ import {
   monthCells,
 } from '../lib/time';
 import { tileColor, tileTextColor } from '../theme';
+import { Enter, useEntered } from './Motion';
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const LEGEND: [Level, string][] = [
@@ -28,11 +29,14 @@ type Props = {
   month: number; // 0-based
   records: Records;
   mode: Mode;
-  currentTarget: string;
+  targetOn: (key: string) => string; // the current target for a day
   applyToPast: boolean;
   hour24: boolean;
   todayKey: string;
   onSelectDay: (key: string) => void;
+  // The Streak tab passes the days that count. Only those are filled, in their
+  // usual colours, and tapping a day opens nothing.
+  counted?: Set<string>;
 };
 
 export default function MonthCalendar({
@@ -40,13 +44,17 @@ export default function MonthCalendar({
   month,
   records,
   mode,
-  currentTarget,
+  targetOn,
   applyToPast,
   hour24,
   todayKey,
   onSelectDay,
+  counted,
 }: Props) {
   const theme = useTheme<MD3Theme>();
+  // When the month first appears its tiles pop in one after another, as a wave.
+  // Give the calendar a new key to play the wave again.
+  const entered = useEntered();
 
   return (
     <View>
@@ -66,24 +74,36 @@ export default function MonthCalendar({
           const entry = records[key];
           const isToday = key === todayKey;
           const isFuture = key > todayKey;
-          const target = entry ? effectiveTarget(entry, currentTarget, applyToPast) : currentTarget;
-          const tileLevel = entry ? level(target, entry.time, mode) : 0;
+          const target = entry ? effectiveTarget(entry, targetOn(key), applyToPast) : targetOn(key);
+          const hit = counted?.has(key);
+          // On the Streak tab a day that does not count is left empty, whatever was logged.
+          const tileLevel = entry && (!counted || hit) ? level(target, entry.time, mode) : 0;
           // Colour is never the only signal: the label carries the time and lateness.
           const spoken = [
             date.toLocaleDateString(undefined, { day: 'numeric', month: 'long' }),
             isToday ? 'today' : null,
-            entry
-              ? `${formatTime(entry.time, hour24)}, ${latenessLabel(diffMinutes(target, entry.time, mode))}`
-              : 'no entry',
+            counted
+              ? hit
+                ? 'counts towards your streak'
+                : 'does not count'
+              : entry
+                ? `${formatTime(entry.time, hour24)}, ${latenessLabel(diffMinutes(target, entry.time, mode))}`
+                : 'no entry',
           ]
             .filter(Boolean)
             .join(', ');
 
           return (
-            <View key={key} style={styles.cell}>
+            // The key holds the level, so a tile pops again when a save or delete changes its colour.
+            <Enter
+              key={`${key}-${tileLevel}`}
+              pop
+              delay={entered.current ? 0 : day * 12}
+              style={styles.cell}
+            >
               <TouchableRipple
                 borderless
-                disabled={isFuture}
+                disabled={isFuture || !!counted}
                 onPress={() => onSelectDay(key)}
                 accessibilityRole="button"
                 accessibilityLabel={spoken}
@@ -99,7 +119,7 @@ export default function MonthCalendar({
                   {day}
                 </Text>
               </TouchableRipple>
-            </View>
+            </Enter>
           );
         })}
       </View>
@@ -107,18 +127,37 @@ export default function MonthCalendar({
   );
 }
 
-export function Legend() {
+// The four tile colours and what each means. On the Streak tab, `streak` is
+// the lowest level that counts: the legend then shows the colours of the days
+// that count together, and an empty tile for the rest.
+export function Legend({ streak }: { streak?: Level }) {
   const theme = useTheme<MD3Theme>();
+  const swatch = (legendLevel: Level | 0) => (
+    <View
+      key={legendLevel}
+      style={[
+        styles.swatch,
+        legendLevel === 0
+          ? { borderWidth: 1, borderColor: theme.colors.outline }
+          : { backgroundColor: tileColor(legendLevel) },
+      ]}
+    />
+  );
+  const item = (swatches: (Level | 0)[], label: string) => (
+    <View key={label} style={styles.legendItem}>
+      {swatches.map(swatch)}
+      <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
+        {label}
+      </Text>
+    </View>
+  );
+  const levels = LEGEND.map(([legendLevel]) => legendLevel);
+
   return (
     <View style={styles.legend}>
-      {LEGEND.map(([legendLevel, label]) => (
-        <View key={legendLevel} style={styles.legendItem}>
-          <View style={[styles.swatch, { backgroundColor: tileColor(legendLevel) }]} />
-          <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
-            {label}
-          </Text>
-        </View>
-      ))}
+      {streak
+        ? [item(levels.filter((legendLevel) => legendLevel >= streak), 'Counts'), item([0], 'Does not count')]
+        : LEGEND.map(([legendLevel, label]) => item([legendLevel], label))}
     </View>
   );
 }

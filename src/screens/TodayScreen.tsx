@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { type MD3Theme, Text, useTheme } from 'react-native-paper';
 import BigTitle from '../components/BigTitle';
 import LatenessPill from '../components/LatenessPill';
+import { Enter, useEntered } from '../components/Motion';
 import { Panel, Row, Rows } from '../components/Panel';
 import Pills from '../components/Pills';
 import SunButton from '../components/SunButton';
@@ -28,7 +29,7 @@ type Props = {
   mode: Mode;
   bedEnabled: boolean;
   records: Records;
-  target: string;
+  targetOn: (key: string) => string; // the current target for a day
   applyToPast: boolean;
   hour24: boolean;
   onMode: (mode: Mode) => void;
@@ -47,7 +48,7 @@ export default function TodayScreen({
   mode,
   bedEnabled,
   records,
-  target,
+  targetOn,
   applyToPast,
   hour24,
   onMode,
@@ -59,8 +60,11 @@ export default function TodayScreen({
   // The day a tap would log to. For bedtime before noon this is yesterday.
   const logKey = logDateFor(mode, now);
   const logged = records[logKey];
+  // What a day is measured against: its own stored target, unless targets apply to past days.
   const targetFor = (key: string) =>
-    records[key] ? effectiveTarget(records[key], target, applyToPast) : target;
+    records[key] ? effectiveTarget(records[key], targetOn(key), applyToPast) : targetOn(key);  // What a tap brings in springs into place. It stays still when the screen is opened.
+  const entered = useEntered();
+  const pop = { pop: true, off: !entered.current };
 
   return (
     <View style={styles.screen}>
@@ -72,29 +76,35 @@ export default function TodayScreen({
 
       {logged ? (
         // Once logged, the button gives way to what was saved.
-        <View style={[styles.result, { backgroundColor: theme.colors.elevation.level1 }]}>
+        <Enter
+          key={`${mode}-result`}
+          {...pop}
+          style={[styles.result, { backgroundColor: theme.colors.elevation.level1 }]}
+        >
           <Text variant="titleMedium" style={{ color: theme.colors.onSurfaceVariant }}>
             {mode === 'wake' ? 'You got up at' : 'You went to bed at'}
           </Text>
           <Text variant="displayLarge" style={styles.resultTime}>
             {formatTime(logged.time, hour24)}
           </Text>
-          <LatenessPill target={targetFor(logKey)} time={logged.time} mode={mode} />
-        </View>
+          <Enter {...pop} delay={180}>
+            <LatenessPill target={targetFor(logKey)} time={logged.time} mode={mode} />
+          </Enter>
+        </Enter>
       ) : (
-        <View style={styles.hero}>
+        <Enter key={`${mode}-button`} {...pop} style={styles.hero}>
           <SunButton
             label={mode === 'wake' ? "I'm up" : 'In bed'}
-            caption={`Target ${formatTime(target, hour24)}`}
+            caption={`Target ${formatTime(targetOn(logKey), hour24)}`}
             shape={mode === 'wake' ? 'sun' : 'circle'}
             onPress={onLog}
           />
-        </View>
+        </Enter>
       )}
 
-      <Panel title="Last few days">
+      <Panel title="Last seven days">
         <Rows>
-          {recentKeys(logKey, 4).map((key) => {
+          {recentKeys(logKey, 7).map((key) => {
             const entry = records[key];
             const name =
               key === todayKey
@@ -110,12 +120,12 @@ export default function TodayScreen({
                   {name}
                 </Text>
                 {entry ? (
-                  <>
+                  <Enter {...pop} style={styles.rowValue}>
                     <Text variant="bodyMedium" style={{ color: rowSecondaryColor(theme) }}>
                       {formatTime(entry.time, hour24)}
                     </Text>
-                    <LatenessPill target={targetFor(key)} time={entry.time} mode={mode} />
-                  </>
+                    <LatenessPill short target={targetFor(key)} time={entry.time} mode={mode} />
+                  </Enter>
                 ) : (
                   <Text variant="bodyMedium" style={{ color: rowSecondaryColor(theme) }}>
                     {none}
@@ -136,4 +146,5 @@ const styles = StyleSheet.create({
   result: { borderRadius: 36, padding: 24, gap: 10, alignItems: 'flex-start' },
   resultTime: { fontFamily: 'Rubik_500Medium', letterSpacing: -1 },
   rowName: { flex: 1 },
+  rowValue: { flexDirection: 'row', alignItems: 'center', gap: 12 },
 });

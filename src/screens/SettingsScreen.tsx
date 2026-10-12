@@ -18,10 +18,16 @@ const THEMES: { value: ThemeChoice; label: string }[] = [
   { value: 'dark', label: 'Dark' },
 ];
 
-type Props = { config: Config; hour24: boolean; onChange: (next: Config) => void };
+type Props = {
+  config: Config;
+  hour24: boolean;
+  onChange: (next: Config) => void;
+  onExport: () => void;
+  onRestore: () => void;
+};
 
 // Settings as a page of grouped rows. Every change applies at once.
-export default function SettingsScreen({ config, hour24, onChange }: Props) {
+export default function SettingsScreen({ config, hour24, onChange, onExport, onRestore }: Props) {
   const theme = useTheme<MD3Theme>();
   const set = (patch: Partial<Config>) => onChange({ ...config, ...patch });
   const label = (text: string, hint?: string) => (
@@ -37,7 +43,7 @@ export default function SettingsScreen({ config, hour24, onChange }: Props) {
 
   return (
     <View style={styles.screen}>
-      <BigTitle title="Settings" subtitle="Targets, bedtime and display" />
+      <BigTitle title="Settings" subtitle="Targets, bedtime, display and data" />
 
       <Panel title="Wake-up">
         <Rows>
@@ -48,6 +54,33 @@ export default function SettingsScreen({ config, hour24, onChange }: Props) {
               value={config.wakeTarget}
               hour24={hour24}
               onChange={(wakeTarget) => set({ wakeTarget })}
+            />
+          </Row>
+          <Row>
+            {label('Different target on weekends')}
+            <Switch
+              accessibilityLabel="Different target on weekends"
+              value={config.weekendTargets}
+              onValueChange={(weekendTargets) => set({ weekendTargets })}
+            />
+          </Row>
+          {config.weekendTargets && (
+            <Row>
+              {label('Weekend wake-up time', 'Saturday and Sunday')}
+              <TimeField
+                label="Weekend wake-up time"
+                value={config.weekendWakeTarget}
+                hour24={hour24}
+                onChange={(weekendWakeTarget) => set({ weekendWakeTarget })}
+              />
+            </Row>
+          )}
+          <Row>
+            {label('Wake-up reminder', 'A notification at your target time.')}
+            <Switch
+              accessibilityLabel="Wake-up reminder"
+              value={config.reminder}
+              onValueChange={(reminder) => set({ reminder })}
             />
           </Row>
           <Row>
@@ -82,6 +115,17 @@ export default function SettingsScreen({ config, hour24, onChange }: Props) {
               />
             </Row>
           )}
+          {config.bedEnabled && config.weekendTargets && (
+            <Row>
+              {label('Weekend bedtime', 'Friday and Saturday nights')}
+              <TimeField
+                label="Weekend bedtime"
+                value={config.weekendBedTarget}
+                hour24={hour24}
+                onChange={(weekendBedTarget) => set({ weekendBedTarget })}
+              />
+            </Row>
+          )}
         </Rows>
       </Panel>
 
@@ -94,6 +138,17 @@ export default function SettingsScreen({ config, hour24, onChange }: Props) {
           <Row stacked>
             <Text variant="bodyLarge">Theme</Text>
             <Pills fill options={THEMES} value={config.theme} onChange={(theme) => set({ theme })} />
+          </Row>
+        </Rows>
+      </Panel>
+
+      <Panel title="Data">
+        <Rows>
+          <Row accessibilityLabel="Export backup" onPress={onExport}>
+            {label('Export backup', 'Saves everything to one file.')}
+          </Row>
+          <Row accessibilityLabel="Restore from backup" onPress={onRestore}>
+            {label('Restore from backup', 'Replaces what is on this phone.')}
           </Row>
         </Rows>
       </Panel>

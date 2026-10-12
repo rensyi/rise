@@ -109,6 +109,13 @@ describe.each([
     for (const colour of painted) expect(FLEXOKI).toContain(colour);
   });
 
+  test('messages take the theme: a row-coloured bar with the text colour, not an inverted one', () => {
+    expect(colors.inverseSurface).toBe(rowColor(theme));
+    expect(colors.inverseOnSurface).toBe(colors.onSurface);
+    // The colour of the message's Undo button.
+    expect(colors.inversePrimary).toBe(colors.onSurface);
+  });
+
   test('text is readable on the background, on cards and on buttons', () => {
     expect(contrast(colors.onBackground, colors.background)).toBeGreaterThanOrEqual(4.5);
     expect(contrast(colors.onSurface, card)).toBeGreaterThanOrEqual(4.5);

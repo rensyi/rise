@@ -1,8 +1,12 @@
 import {
   CELL_WIDTH,
+  DEFAULT_CONFIG,
   type Records,
+  type StreakRule,
   addEntry,
   bedDateFor,
+  bestRun,
+  countedDays,
   dateKey,
   diffMinutes,
   effectiveTarget,
@@ -22,6 +26,9 @@ import {
   resolveHour24,
   sameLogDay,
   shiftMonth,
+  spreadMinutes,
+  streakCount,
+  targetFor,
   timeOf,
   upsertEntry,
 } from './time';
@@ -141,6 +148,15 @@ describe('latenessLabel', () => {
     expect(latenessLabel(150)).toBe('2hrs 30mins late');
     expect(latenessLabel(-570)).toBe('9hrs 30mins early');
   });
+
+  test('the short form drops the minutes once there is a full hour', () => {
+    expect(latenessLabel(-323, true)).toBe('5hrs early');
+    expect(latenessLabel(61, true)).toBe('1hr late');
+    expect(latenessLabel(119, true)).toBe('1hr late');
+    expect(latenessLabel(120, true)).toBe('2hrs late');
+    expect(latenessLabel(59, true)).toBe('59mins late');
+    expect(latenessLabel(0, true)).toBe('On time');
+  });
 });
 
 describe('effectiveTarget', () => {
@@ -157,7 +173,7 @@ describe('effectiveTarget', () => {
 
 describe('monthStats', () => {
   test('empty month', () => {
-    expect(monthStats({}, 2026, 9, 'wake', '06:00', false)).toEqual({
+    expect(monthStats({}, 2026, 9, 'wake', () => '06:00', false)).toEqual({
       logged: 0,
       onTime: 0,
       avgLate: null,
@@ -172,7 +188,7 @@ describe('monthStats', () => {
       '2026-10-03': { time: '07:30', target: '06:00' },
     };
     // late minutes: 0, 20, 90 -> mean 36.67
-    expect(monthStats(records, 2026, 9, 'wake', '06:00', false)).toEqual({
+    expect(monthStats(records, 2026, 9, 'wake', () => '06:00', false)).toEqual({
       logged: 3,
       onTime: 1,
       avgLate: 37,
@@ -184,12 +200,12 @@ describe('monthStats', () => {
       '2026-10-01': { time: '09:00', target: '09:00' },
       '2026-10-02': { time: '09:00', target: '06:00' },
     };
-    expect(monthStats(records, 2026, 9, 'wake', '09:00', false)).toEqual({
+    expect(monthStats(records, 2026, 9, 'wake', () => '09:00', false)).toEqual({
       logged: 2,
       onTime: 1,
       avgLate: 90,
     });
-    expect(monthStats(records, 2026, 9, 'wake', '09:00', true)).toEqual({
+    expect(monthStats(records, 2026, 9, 'wake', () => '09:00', true)).toEqual({
       logged: 2,
       onTime: 2,
       avgLate: 0,
@@ -367,5 +383,131 @@ describe('recentKeys', () => {
   test('crosses month and year boundaries', () => {
     expect(recentKeys('2026-11-01', 2)).toEqual(['2026-11-01', '2026-10-31']);
     expect(recentKeys('2027-01-01', 2)).toEqual(['2027-01-01', '2026-12-31']);
+  });
+});
+
+describe('monthStats with a target per day', () => {
+  test('with targets applied to past days, each day is measured against the target for its own date', () => {
+    const records: Records = {
+      '2026-10-10': { time: '07:30', target: '06:00' },
+      '2026-10-12': { time: '06:00', target: '06:00' },
+    };
+    const targetOn = (key: string) => (key === '2026-10-10' ? '08:00' : '06:00');
+
+    expect(monthStats(records, 2026, 9, 'wake', targetOn, true).onTime).toBe(2);
+    expect(monthStats(records, 2026, 9, 'wake', targetOn, false).onTime).toBe(1);
+  });
+});
+
+describe('targetFor', () => {
+  const config = {
+    ...DEFAULT_CONFIG,
+    weekendTargets: true,
+    weekendWakeTarget: '08:00',
+    weekendBedTarget: '23:30',
+  };
+  // Thursday 8 to Monday 12 October 2026.
+  const days = ['2026-10-08', '2026-10-09', '2026-10-10', '2026-10-11', '2026-10-12'];
+
+  test('with weekend targets off, every day uses the one target', () => {
+    expect(targetFor(DEFAULT_CONFIG, 'wake', '2026-10-10')).toBe('06:00');
+    expect(targetFor(DEFAULT_CONFIG, 'bed', '2026-10-10')).toBe('22:00');
+  });
+
+  test('weekend mornings are Saturday and Sunday', () => {
+    expect(days.map((key) => targetFor(config, 'wake', key))).toEqual([
+      '06:00',
+      '06:00',
+      '08:00',
+      '08:00',
+      '06:00',
+    ]);
+  });
+
+  test('weekend nights are Friday and Saturday', () => {
+    expect(days.map((key) => targetFor(config, 'bed', key))).toEqual([
+      '22:00',
+      '23:30',
+      '23:30',
+      '22:00',
+      '22:00',
+    ]);
+  });
+});
+
+describe('spreadMinutes', () => {
+  const at = (...times: string[]): Records =>
+    Object.fromEntries(times.map((time, i) => [`2026-10-0${i + 1}`, { time, target: '06:00' }]));
+
+  test('needs two logged days in the month', () => {
+    expect(spreadMinutes({}, 2026, 9, 'wake')).toBeNull();
+    expect(spreadMinutes(at('06:00'), 2026, 9, 'wake')).toBeNull();
+    expect(spreadMinutes(at('06:00', '07:00'), 2026, 8, 'wake')).toBeNull();
+  });
+
+  test('is the average distance from the mean time, whatever the target', () => {
+    expect(spreadMinutes(at('06:00', '06:20', '06:40'), 2026, 9, 'wake')).toBe(13);
+    expect(spreadMinutes(at('09:00', '09:00'), 2026, 9, 'wake')).toBe(0);
+  });
+
+  test('bedtimes either side of midnight are close together', () => {
+    expect(spreadMinutes(at('23:50', '00:10'), 2026, 9, 'bed')).toBe(10);
+  });
+});
+
+describe('streak', () => {
+  const day = (d: number) => `2026-10-${String(d).padStart(2, '0')}`;
+  const at = (times: Record<number, string>): Records =>
+    Object.fromEntries(Object.entries(times).map(([d, time]) => [day(Number(d)), { time, target: '06:00' }]));
+  const targetOn = () => '06:00';
+  const counted = (records: Records, rule: StreakRule, applyToPast = false) =>
+    [...countedDays(records, 'wake', rule, targetOn, applyToPast)];
+
+  test('which days count depends on the rule', () => {
+    const records = at({ 9: '05:50', 10: '06:20', 11: '07:10' });
+    expect(counted(records, 'logged')).toEqual([day(9), day(10), day(11)]);
+    expect(counted(records, 'near')).toEqual([day(9), day(10)]);
+    expect(counted(records, 'onTime')).toEqual([day(9)]);
+  });
+
+  test('a day is measured against the target it was logged with, unless targets apply to past days', () => {
+    const records: Records = { [day(12)]: { time: '07:00', target: '07:00' } };
+    expect(counted(records, 'onTime')).toEqual([day(12)]);
+    expect(counted(records, 'onTime', true)).toEqual([]);
+  });
+
+  test('in a row: counts back from the end day, and a gap ends it', () => {
+    const days = new Set([day(8), day(10), day(11), day(12)]);
+    expect(streakCount('row', days, day(12), true)).toBe(3);
+    expect(streakCount('row', new Set(), day(12), false)).toBe(0);
+  });
+
+  test('in a row: a day not logged yet does not break it, but a logged day that does not count does', () => {
+    const days = new Set([day(9), day(10), day(11)]);
+    expect(streakCount('row', days, day(12), false)).toBe(3);
+    expect(streakCount('row', days, day(12), true)).toBe(0);
+  });
+
+  test('in a row: runs across a month boundary', () => {
+    expect(streakCount('row', new Set(['2026-09-30', day(1), day(2)]), day(2), true)).toBe(3);
+  });
+
+  test('last 7 days: counts the days within the seven ending on the end day', () => {
+    const days = new Set([day(5), day(6), day(8), day(12)]);
+    expect(streakCount('seven', days, day(12), true)).toBe(3);
+  });
+
+  test('this week: counts from the most recent Sunday', () => {
+    // Sunday 11 October 2026 starts the week.
+    const days = new Set([day(9), day(10), day(11), day(12), day(13)]);
+    expect(streakCount('week', days, day(11), true)).toBe(1);
+    expect(streakCount('week', days, day(12), true)).toBe(2);
+    expect(streakCount('week', days, day(17), true)).toBe(3);
+  });
+
+  test('the best run is the longest stretch of days in a row', () => {
+    expect(bestRun(new Set([day(5), day(6), day(1), day(2), day(3), '2026-09-30']))).toBe(4);
+    expect(bestRun(new Set([day(4)]))).toBe(1);
+    expect(bestRun(new Set())).toBe(0);
   });
 });

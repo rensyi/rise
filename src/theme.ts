@@ -117,9 +117,12 @@ const build = (base: MD3Theme, s: Shades): MD3Theme => ({
     onSurfaceVariant: s.secondary,
     outline: s.secondary,
     outlineVariant: s.border,
-    inverseSurface: s.text,
-    inverseOnSurface: s.background,
-    inversePrimary: s.background,
+    // The "inverse" roles colour pop-up messages. Material inverts them (a
+    // light bar in dark mode); here they take the theme instead: a row-coloured
+    // bar with the text colour, and the same for its Undo button.
+    inverseSurface: s.row,
+    inverseOnSurface: s.text,
+    inversePrimary: s.text,
     backdrop: 'rgba(0, 0, 0, 0.5)',
     elevation: raised(s.card),
   },

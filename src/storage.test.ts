@@ -16,7 +16,18 @@ jest.mock('@react-native-async-storage/async-storage', () => {
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DEFAULT_CONFIG } from './lib/time';
-import { load, parseConfig, parseRecords, persist, saveConfig, saveWake } from './storage';
+import {
+  backupName,
+  load,
+  makeBackup,
+  parseBackup,
+  parseConfig,
+  parseRecords,
+  persist,
+  replaceAll,
+  saveConfig,
+  saveWake,
+} from './storage';
 
 beforeEach(async () => {
   await AsyncStorage.clear();
@@ -119,5 +130,85 @@ describe('persist', () => {
     });
     expect(await persist('old', 'new', set, save)).toBe(false);
     expect(set.mock.calls).toEqual([['new'], ['old']]);
+  });
+});
+
+describe('settings added later', () => {
+  test('settings saved before weekend targets and the reminder existed load with both off', () => {
+    expect(parseConfig(JSON.stringify({ wakeTarget: '09:00' }))).toMatchObject({
+      weekendTargets: false,
+      weekendWakeTarget: '08:00',
+      weekendBedTarget: '23:00',
+      reminder: false,
+    });
+  });
+
+  test('keeps valid weekend targets and the reminder, and defaults bad ones', () => {
+    const raw = JSON.stringify({
+      weekendTargets: true,
+      weekendWakeTarget: '09:30',
+      weekendBedTarget: 'late',
+      reminder: 'yes',
+    });
+    expect(parseConfig(raw)).toMatchObject({
+      weekendTargets: true,
+      weekendWakeTarget: '09:30',
+      weekendBedTarget: '23:00',
+      reminder: false,
+    });
+  });
+});
+
+describe('streak settings', () => {
+  test('load with any logged day counting, in a row, for wake-ups, when missing or unknown', () => {
+    const defaults = { streakFor: 'wake', streakRule: 'logged', streakStyle: 'row' };
+    expect(parseConfig(JSON.stringify({ wakeTarget: '09:00' }))).toMatchObject(defaults);
+    expect(
+      parseConfig(JSON.stringify({ streakFor: 'naps', streakRule: 'always', streakStyle: 7 })),
+    ).toMatchObject(defaults);
+  });
+
+  test('keep valid choices', () => {
+    const chosen = { streakFor: 'bed', streakRule: 'onTime', streakStyle: 'week' };
+    expect(parseConfig(JSON.stringify(chosen))).toMatchObject(chosen);
+  });
+});
+
+describe('backup', () => {
+  const data = {
+    wake: { '2026-10-11': { time: '06:10', target: '06:00' } },
+    bed: { '2026-10-10': { time: '22:30', target: '22:00' } },
+    config: { ...DEFAULT_CONFIG, wakeTarget: '07:00', bedEnabled: true },
+  };
+  const now = new Date(2026, 9, 12, 6, 12);
+
+  test('a backup reads back as the same data', () => {
+    expect(parseBackup(makeBackup(data, now))).toEqual(data);
+  });
+
+  test('the file is named after the day it was made', () => {
+    expect(backupName(now)).toBe('rise-backup-2026-10-12.json');
+  });
+
+  test('anything that is not a Rise backup is refused', () => {
+    expect(parseBackup('{oops')).toBeNull();
+    expect(parseBackup('[]')).toBeNull();
+    expect(parseBackup(JSON.stringify({ wake: {}, bed: {}, config: {} }))).toBeNull();
+    expect(parseBackup(JSON.stringify({ app: 'rise', wake: [], bed: {}, config: {} }))).toBeNull();
+  });
+
+  test('bad entries inside a backup are dropped and good ones kept', () => {
+    const raw = JSON.stringify({
+      app: 'rise',
+      wake: { '2026-10-11': { time: '06:10', target: '06:00' }, nonsense: { time: '25:00' } },
+      bed: {},
+      config: { wakeTarget: 'early' },
+    });
+    expect(parseBackup(raw)).toEqual({ wake: data.wake, bed: {}, config: DEFAULT_CONFIG });
+  });
+
+  test('replaceAll writes wake, bedtime and settings together', async () => {
+    await replaceAll(data);
+    expect(await load()).toEqual(data);
   });
 });

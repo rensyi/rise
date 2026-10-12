@@ -1,16 +1,22 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { type MD3Theme, Text, useTheme } from 'react-native-paper';
+import { Enter } from './Motion';
 
-type Props = { title: string; subtitle?: string; children?: ReactNode };
+type Props = {
+  title: string;
+  subtitle?: string;
+  slide?: number; // when the title changes, the new one slides in from this far to the right
+  children?: ReactNode;
+};
 
 // The large page title that opens every screen. Children are round tools at the right.
-export default function BigTitle({ title, subtitle, children }: Props) {
+export default function BigTitle({ title, subtitle, slide, children }: Props) {
   const theme = useTheme<MD3Theme>();
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.text}>
+      <Enter key={`${title} ${subtitle}`} x={slide} off={!slide} style={styles.text}>
         <Text
           variant="displayMedium"
           accessibilityRole="header"
@@ -25,8 +31,8 @@ export default function BigTitle({ title, subtitle, children }: Props) {
             {subtitle}
           </Text>
         )}
-      </View>
-      {children && <View style={styles.tools}>{children}</View>}
+      </Enter>
+      {children &&<View style={styles.tools}>{children}</View>}
     </View>
   );
 }

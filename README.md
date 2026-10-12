@@ -36,6 +36,13 @@ npm run typecheck
 - **Three places.** Today for logging, Calendar for the month, and Settings,
   on a floating bar at the bottom.
 - **Fix it later.** Tap any past day to add, change or delete an entry.
+- **The last seven days.** Today lists the past week at a glance.
+- **Consistency.** Calendar shows how close together the month's times are.
+- **Streak.** A tab on Calendar, set up your way: what makes a day count, and
+  whether to count days in a row, the last seven days, or this week.
+- **Weekend targets.** An optional later target for Saturday and Sunday.
+- **Reminder.** An optional notification at your wake-up target.
+- **Backup.** Export everything to one file, and restore from it.
 - **Monthly stats.** Days logged, days on time, and average minutes late.
 - **Your clock, your theme.** Times show in 12- or 24-hour format and the app
   in light or dark. Both follow your phone by default and can be set in
@@ -109,9 +116,14 @@ src/
   theme.test.ts              unit tests
   lib/time.ts                pure logic: levels, labels, month stats
   lib/time.test.ts           unit tests
+  lib/sun.ts                 outline of the wake button
+  lib/sun.test.ts            unit tests
   storage.ts                 load and save
   storage.test.ts            unit tests
   useRise.ts                 state hook
+  reminder.ts                schedules the wake-up reminder
+  reminder.test.ts           unit tests
+  backup.ts                  shares a backup file, picks one to restore
   Shell.tsx                  shared screen state, bottom bar, day sheet
   screens/
     TodayScreen.tsx          log button or result, last few days
@@ -120,6 +132,7 @@ src/
   components/
     BigTitle.tsx  Panel.tsx  Pills.tsx  SunButton.tsx  LatenessPill.tsx
     NavBar.tsx  DaySheet.tsx  TimeField.tsx  MonthCalendar.tsx  StatsRow.tsx
+    Motion.tsx  Sheet.tsx  RestoreSheet.tsx  StreakView.tsx
 assets/                      placeholder icons; see assets/README.md
 docs/superpowers/specs/      design spec
 docs/superpowers/plans/      implementation plan

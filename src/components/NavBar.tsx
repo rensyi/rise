@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { Icon, type MD3Theme, Text, TouchableRipple, useTheme } from 'react-native-paper';
 import { rowColor } from '../theme';
+import { Enter } from './Motion';
 
 export type Tab = 'today' | 'calendar' | 'settings';
 
@@ -40,7 +41,9 @@ export default function NavBar({ tab, bottomInset, onChange }: Props) {
             style={styles.item}
           >
             <View style={styles.itemContent}>
-              <View style={[styles.iconPill, active && { backgroundColor: rowColor(theme) }]}>
+              <View style={styles.iconPill}>
+                {/* The pill grows out from the middle of the item that was just chosen. */}
+                {active && <Enter scaleX={0.4} style={[styles.activePill, { backgroundColor: rowColor(theme) }]} />}
                 <Icon source={item.icon} size={22} color={color} />
               </View>
               <Text variant={active ? 'labelLarge' : 'labelMedium'} style={{ color }}>
@@ -67,5 +70,6 @@ const styles = StyleSheet.create({
   },
   item: { flex: 1, borderRadius: 24 },
   itemContent: { alignItems: 'center', gap: 4, paddingVertical: 4 },
-  iconPill: { borderRadius: 999, paddingVertical: 5, paddingHorizontal: 20 },
+  iconPill: { paddingVertical: 5, paddingHorizontal: 20 },
+  activePill: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: 999 },
 });

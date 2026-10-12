@@ -6,7 +6,9 @@ the implementation plan (`docs/superpowers/plans/2026-10-12-rise.md`);
 sections 3.4, 3.5, 5 and 6 amended after device testing the same day (time
 format and theme settings); section 3.5 rewritten for the Ink and gold palette and
 Rubik font; sections 3.1, 3.3, 3.4 and 5 rewritten for the three-screen
-Material 3 Expressive layout
+Material 3 Expressive layout; section 3.5 amended for the corrected sun shape
+and for motion; sections 3.1, 3.4, 5, 6, 8 and 9 amended for the streak,
+consistency score, weekend targets, reminder and backup
 
 ## 1. Purpose
 
@@ -43,19 +45,23 @@ which one is drawn. On Android, the back button returns to Today before it
 leaves the app. The look follows Material 3 Expressive (3.5).
 
 When bedtime tracking is on (3.4), Today and Calendar both show **Wake** and
-**Bedtime** pill tabs under the title. They share one selection.
+**Bedtime** pill tabs under the title. They share one selection. Calendar always has one more tab after them,
+**Streak**; with bedtime tracking off its tabs are Wake and Streak.
 
 **Today** is where the app opens.
 
 - **Title** — the weekday in large type, with the date under it.
+- There is no streak on Today. It has its own tab on Calendar (below).
 - **The log button** — one large gold button: a sun shape reading "I'm up" in
   Wake mode, a plain disc reading "In bed" in Bedtime mode. Under the label
   it shows the current target.
 - **After logging** — the button is replaced by a card with "You got up at"
   (or "You went to bed at"), the time in large type, and the lateness label.
-- **Last few days** — four rows, the day a tap would log to and the three
+- **Last seven days** — seven rows, the day a tap would log to and the six
   before it, each with its time and lateness label or "No entry". Tapping a
-  row opens the day sheet (3.3).
+  row opens the day sheet (3.3). To keep the rows short, the label here drops the minutes
+  once there is a full hour ("5hrs early", not "5hrs 23mins early"); the
+  result card, the day sheet and screen readers give the full figure.
 
 **Calendar** shows one month.
 
@@ -66,6 +72,39 @@ When bedtime tracking is on (3.4), Today and Calendar both show **Wake** and
   - *On time* — number of level 4 days. This card is a gold pill.
   - *Avg late* — mean of `max(0, diff)` in minutes over logged days, shown as
     `+18m`, `0m`, or `—` when nothing is logged.
+- **Consistency** — one wide card under the stats row. It measures how close
+  together the month's times are, whatever the target: the spread is the
+  average distance of each time from the month's mean time, in minutes, and
+  the score is 100 minus the spread, never below 0. It reads "87%" with
+  "Your times vary by about 13mins", or `—` with "Needs two logged days".
+  Bedtimes are compared on a noon-to-noon clock, so 23:50 and 00:10 are 20
+  minutes apart.
+
+**The Streak tab** of Calendar replaces the stats row, grid and legend with:
+
+- **The streak** — a gold card with the number in large type and what it
+  counts beside it.
+- **The month** — the same grid. A day that counts keeps its usual tile
+  colour (3.2); a day that does not count is left empty, whatever was
+  logged. Days here do not open the day sheet. The legend has two items:
+  "Counts", beside the colours that count under the current rule (all four
+  for Logged, two for Within 30m, gold alone for On time), and "Does not
+  count", beside an empty tile.
+- **How your streak works** — three choices, saved with the settings:
+  - *Follow* — Wake-ups (default) or Bedtimes. Shown only while Track
+    bedtime is on; otherwise the streak follows wake-ups.
+  - *A day counts when it is* — Logged (default: any entry), Within 30m
+    (tile levels 4 and 3) or On time (level 4). Each day is measured
+    against the same target as its tile (3.2).
+  - *Count* — one of:
+    - In a row (default): counted days in a row, ending on the day a tap
+      would log to. Until that day is logged the run ends the day before,
+      so it is not shown as broken during the day; once it is logged and
+      does not count, the streak is 0. The card also shows "Best so far",
+      the longest run ever.
+    - Last 7 days: how many of the seven days ending on that day count,
+      shown as "5/7". It never resets.
+    - This week: how many count since the most recent Sunday.
 - **Month grid** — a weekday header starting on Sunday and one round tile per
   day (3.2), on a panel.
 - **Legend** — the four colour levels with their labels.
@@ -127,7 +166,11 @@ the only signal.
     before 12:00, so a 01:00 bedtime belongs to the night before.
   - The button is replaced by the result card when the day it would write to
     already has an entry.
-  - A snackbar confirms: "Logged 06:12".
+  - A message confirms: "Logged 06:12", with an **Undo** button that removes
+    the entry just logged. It stays for five seconds; other messages have no
+    Undo and stay for three.
+  - Messages take the theme: a row-coloured bar with the text colour and a
+    thin border, not Material's inverted bar (light in dark mode).
 - **Edit, backfill, delete.** Tapping a calendar tile for today or any past
   day, or a row on Today, opens the day sheet, which slides up from the
   bottom. From the top: the title, the date, the lateness label, the time in
@@ -146,10 +189,27 @@ the only signal.
 
 ### 3.4 Settings
 
-A page of grouped rows, in three groups: Wake-up, Bedtime and Display. Every
-change applies at once.
+A page of grouped rows, in four groups: Wake-up, Bedtime, Display and Data.
+Every change applies at once.
 
 - **Target wake-up time** — default 06:00.
+- **Different target on weekends** — switch, default off. On: Saturday and
+  Sunday mornings use **Weekend wake-up time** (default 08:00), and Friday
+  and Saturday nights use **Weekend bedtime** (default 23:00). Both rows
+  appear only while the switch is on, and the bedtime one only while Track
+  bedtime is on. It is one switch for both modes, like "Apply targets to
+  past days", and does not link wake and bedtime. A new entry stores the
+  target for its own day.
+- **Wake-up reminder** — switch, default off. On: a notification at the
+  wake-up target every day, at the weekend time on weekends. Turning it on
+  asks the phone for permission; if that is refused the switch stays off
+  and a message says why. It is a notification, not an alarm: it does not
+  sound through silent mode. If today's wake-up is logged before the target,
+  today's reminder is not sent: it is put off to the same time next week.
+  Inside Expo Go on Android the reminder cannot run: Expo Go no
+  longer includes notifications there, and loading the package stops the
+  app from opening. So the package is loaded only on first use and never in
+  that environment, where the switch stays off and a message says why.
 - **Apply targets to past days** — switch, default off. Off: each day is
   measured against the target it was logged with. On: every day is measured
   against the current target. Stored targets are never overwritten, so
@@ -160,6 +220,13 @@ change applies at once.
   follows the phone's own 12/24-hour switch.
 - **Theme** — Device, Light or Dark; default Device. Device follows the
   phone's light or dark mode.
+- **Export backup** — writes everything (section 6) to one file,
+  `rise-backup-YYYY-MM-DD.json`, and opens the phone's share sheet.
+- **Restore from backup** — the user picks a file. A file that is not a Rise
+  backup is refused with a message. Otherwise a sheet shows the file name,
+  how many wake-ups and bedtimes it holds and its latest date, and asks
+  before replacing everything on the phone. Entries and settings in the
+  file are checked exactly as stored data is on load.
 
 Turning Track bedtime off hides the Wake and Bedtime tabs and returns the app
 to Wake mode; turning it on again starts in Wake mode. Bedtime entries are kept and reappear when it is turned back on.
@@ -232,9 +299,33 @@ design language.
   take larger outer corners.
 - **A floating bottom bar**, clear of the screen edges, with a pill behind
   the active item.
-- **One playful shape.** The wake button is Material's "sunny" shape, built
-  from three overlapping rounded squares. Nothing else uses a novelty shape.
+- **One playful shape.** The wake button is Material's "sunny" shape: a disc
+  with ten soft scallops, each dipping 14% of the radius, drawn as one
+  outline. Nothing else uses a novelty shape.
 - The time picker is a ready-made component and keeps its standard look.
+
+**Motion.** Movement answers what the user just did, and is short.
+
+- **Opening a screen** — it fades in and rises 14px.
+- **Bottom bar** — the pill behind the chosen item grows out from its middle.
+- **Log button** — the sun turns once a minute while its label stays
+  upright. The "In bed" disc lets off Zs: each drifts up and to the right
+  for 1.8s, and the next leaves 0.75 to 1.6s later, so they come at uneven
+  moments and never overlap. Either button shrinks a little while pressed.
+- **After logging** — the result card springs in, its lateness label a beat
+  later, and the day's row in "Last seven days" springs in with it. Changing
+  between Wake and Bedtime springs the button or card in again.
+- **Pills** — shrink a little while pressed; the one just chosen dips and
+  springs back.
+- **Calendar** — tiles pop in one after another when the month appears or
+  the mode changes. A new month's title and grid slide in from the side it
+  was reached from. A tile pops again when a save or delete changes its
+  colour.
+- **Day sheet** — slides up from the bottom edge, and back down when closed.
+- **Still on purpose** — theme changes, the time picker, the stat numbers
+  and the switches.
+- **Reduce motion** — when the device asks for less motion, none of this
+  plays: the sun stays still and the Zs stand in a rising line.
 
 **Type.** All text is Rubik (Google Fonts, Open Font License), in regular and
 medium weights, loaded when the app starts. The app waits for the font so
@@ -292,9 +383,14 @@ src/theme.ts                 colours, font, light and dark themes
 src/theme.test.ts            unit tests
 src/lib/time.ts              pure logic, no React, no storage
 src/lib/time.test.ts         unit tests
+src/lib/sun.ts               outline of the wake button
+src/lib/sun.test.ts          unit tests
 src/storage.ts               parse, load, save
 src/storage.test.ts          unit tests
 src/useRise.ts               state hook
+src/reminder.ts              schedules the wake-up reminder
+src/reminder.test.ts         unit tests
+src/backup.ts                shares a backup file, picks one to restore
 src/Shell.tsx                shared screen state, bottom bar, day sheet
 src/screens/
   TodayScreen.tsx            log button or result, last few days
@@ -305,20 +401,26 @@ src/components/
   Panel.tsx                  panel, grouped rows, row
   Pills.tsx                  row of pills with one selected
   SunButton.tsx              the log button
+  Motion.tsx                 all movement, and the reduce-motion switch
   LatenessPill.tsx           "12mins late" in the tile's colour
   NavBar.tsx                 floating bottom bar
+  Sheet.tsx                  panel that slides up from the bottom
   DaySheet.tsx               add, edit, delete one day
+  RestoreSheet.tsx           confirms restoring a backup
+  StreakView.tsx             the Streak tab of Calendar
   TimeField.tsx              time button or large time + time picker
   TimeField.test.tsx         unit test
   MonthCalendar.tsx          grid of tiles, legend
-  StatsRow.tsx               three stat cards
+  StatsRow.tsx               three stat cards and the consistency card
 ```
 
 | Unit | Does | Depends on |
 |---|---|---|
 | `lib/time.ts` | `parseTime`, `dateKey`, `effectiveTarget(entry, currentTarget, applyToPast)`, `level(target, logged, mode)`, `latenessLabel`, `monthStats`, `bedDateFor(now)`, entry helpers, time formatting | nothing |
 | `storage.ts` | `load()` returns `{wake, bed, config}`; `saveWake`, `saveBed`, `saveConfig`; `persist` (save, revert on failure) | AsyncStorage |
-| `useRise.ts` | holds state, exposes `logNow`, `setEntry`, `deleteEntry`, `setConfig` | `storage.ts`, `lib/time.ts` |
+| `useRise.ts` | holds state, exposes `logNow`, `setEntry`, `deleteEntry`, `setConfig`, `exportData`, `chooseBackup`, `restore`; keeps the reminder in step with the settings | `storage.ts`, `lib/time.ts`, `reminder.ts`, `backup.ts` |
+| `reminder.ts` | asks for permission; schedules one weekly notification per day of the week | `expo-notifications`, `lib/time.ts` |
+| `backup.ts` | writes and shares the backup file; picks and reads one | `expo-file-system`, `expo-sharing`, `expo-document-picker`, `storage.ts` |
 | `Shell.tsx` | holds what the screens share: the date, the mode, the month in view, the open day, the active screen | `useRise.ts`, screens |
 | screens | lay out one place each from props | components, `lib/time.ts` |
 | components | render props, call callbacks | `lib/time.ts`, `theme.ts`, Paper |
@@ -353,7 +455,13 @@ AsyncStorage, three keys, JSON values:
 |---|---|
 | `rise.wake` | `{ "2026-10-12": { "time": "06:45", "target": "06:00" }, ... }` |
 | `rise.bed` | `{ "2026-10-11": { "time": "23:10", "target": "22:00" }, ... }` |
-| `rise.config` | `{ "wakeTarget": "06:00", "bedEnabled": false, "bedTarget": "22:00", "applyTargetsToPast": false, "timeFormat": "device", "theme": "device" }` |
+| `rise.config` | `{ "wakeTarget": "06:00", "bedEnabled": false, "bedTarget": "22:00", "weekendTargets": false, "weekendWakeTarget": "08:00", "weekendBedTarget": "23:00", "reminder": false, "streakFor": "wake", "streakRule": "logged", "streakStyle": "row", "applyTargetsToPast": false, "timeFormat": "device", "theme": "device" }` |
+
+Settings saved by an older version lack the newer fields; those load with
+their defaults.
+
+A backup file is `{ "app": "rise", "version": 1, "exportedAt": "...", "wake": {...}, "bed": {...}, "config": {...} }`,
+with the same three values as above.
 
 - Date keys are local calendar dates as `YYYY-MM-DD`.
 - Times and targets are 24-hour `HH:mm`.
@@ -421,15 +529,26 @@ of the row, so the seventh day cannot wrap on any screen width.
 - bedtime tracking on, off and on again
 - the time format and theme settings
 - an app left open overnight into a new month
+- the seven days on Today with shortened labels, and the consistency card on Calendar
+- the Streak tab: its three choices, that they are saved, and following bedtimes
+- a Saturday logged against the weekend target
+- the reminder turned on, and refused by the phone
+- exporting a backup, restoring one, and refusing a file that is not one
 - font loading, slow and failed
+- the Zs on the "In bed" button
+- the day sheet sliding away, and closing at once with reduced motion
 
 Layout and colour are checked by running the app.
 
 ## 9. Out of scope
 
-Alarms and reminders, sleep duration, a consistency or streak stat, accounts
-and sync, export or backup, home-screen widgets, charts, per-weekday targets,
-multiple entries per day.
+Alarms, sleep duration, accounts and sync, charts, a separate target for each
+day of the week, multiple entries per day.
+
+A home-screen widget is planned but not built: it cannot run in Expo Go and
+needs its own build of the app. The streak, consistency score, weekend
+targets, reminder and backup were out of scope at first and were added later
+the same day.
 
 ## 10. Prototype
 

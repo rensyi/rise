@@ -4,10 +4,21 @@ export type Records = Record<string, Entry>;
 export type Level = 1 | 2 | 3 | 4;
 export type TimeFormat = 'device' | '12h' | '24h';
 export type ThemeChoice = 'device' | 'light' | 'dark';
+// A day counts when it is logged at all, within 30 minutes of target, or on time.
+export type StreakRule = 'logged' | 'near' | 'onTime';
+// Counted as days in a row, out of the last seven days, or since Sunday.
+export type StreakStyle = 'row' | 'seven' | 'week';
 export type Config = {
   wakeTarget: string;
   bedEnabled: boolean;
   bedTarget: string;
+  weekendTargets: boolean; // a different target on weekends
+  weekendWakeTarget: string;
+  weekendBedTarget: string;
+  reminder: boolean; // a notification at the wake-up target
+  streakFor: Mode; // the streak follows wake-ups or bedtimes
+  streakRule: StreakRule;
+  streakStyle: StreakStyle;
   applyTargetsToPast: boolean;
   timeFormat: TimeFormat;
   theme: ThemeChoice;
@@ -19,6 +30,13 @@ export const DEFAULT_CONFIG: Config = {
   wakeTarget: '06:00',
   bedEnabled: false,
   bedTarget: '22:00',
+  weekendTargets: false,
+  weekendWakeTarget: '08:00',
+  weekendBedTarget: '23:00',
+  reminder: false,
+  streakFor: 'wake',
+  streakRule: 'logged',
+  streakStyle: 'row',
   applyTargetsToPast: false,
   timeFormat: 'device',
   theme: 'device',
@@ -84,30 +102,125 @@ export function formatDuration(minutes: number): string {
   return rest === 0 ? plural(hours, 'hr') : `${plural(hours, 'hr')} ${plural(rest, 'min')}`;
 }
 
-export function latenessLabel(diff: number): string {
+// `short` drops the minutes once there is a full hour ("5hrs early"), for
+// places with little room.
+export function latenessLabel(diff: number, short = false): string {
   if (diff === 0) return 'On time';
-  return `${formatDuration(Math.abs(diff))} ${diff < 0 ? 'early' : 'late'}`;
+  const size = Math.abs(diff);
+  const shown = short && size >= 60 ? size - (size % 60) : size;
+  return `${formatDuration(shown)} ${diff < 0 ? 'early' : 'late'}`;
+}
+
+// "1 wake-up", "28 bedtimes".
+export function countOf(records: Records, noun: string): string {
+  const count = Object.keys(records).length;
+  return `${count} ${noun}${count === 1 ? '' : 's'}`;
 }
 
 export function effectiveTarget(entry: Entry, currentTarget: string, applyToPast: boolean): string {
   return applyToPast ? currentTarget : entry.target;
 }
 
-// month is 0-based, as in Date.
+const dateOfKey = (key: string) => {
+  const [year, month, day] = key.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
+// The current target for a day of the week (0 is Sunday). With weekend targets
+// on, weekend mornings are Saturday and Sunday, and weekend nights are the
+// ones before them: Friday and Saturday.
+export function targetOnWeekday(config: Config, mode: Mode, weekday: number): string {
+  const wake = mode === 'wake';
+  const weekend = config.weekendTargets && (weekday === 6 || weekday === (wake ? 0 : 5));
+  if (wake) return weekend ? config.weekendWakeTarget : config.wakeTarget;
+  return weekend ? config.weekendBedTarget : config.bedTarget;
+}
+
+// The current target for the day an entry is logged under.
+export function targetFor(config: Config, mode: Mode, key: string): string {
+  return targetOnWeekday(config, mode, dateOfKey(key).getDay());
+}
+
+// The streak is set up by the user: which days count, and how they are counted.
+// The lowest tile level that counts under each rule; any logged day has at least 1.
+export const RULE_LEVEL: Record<StreakRule, Level> = { logged: 1, near: 3, onTime: 4 };
+
+// The days that count towards the streak, oldest first.
+export function countedDays(
+  records: Records,
+  mode: Mode,
+  rule: StreakRule,
+  targetOn: (key: string) => string,
+  applyToPast: boolean,
+): Set<string> {
+  const counts = (key: string) =>
+    level(effectiveTarget(records[key], targetOn(key), applyToPast), records[key].time, mode) >= RULE_LEVEL[rule];
+  return new Set(Object.keys(records).sort().filter(counts));
+}
+
+// The streak's number, for the day a tap would log to.
+// - row: days in a row ending there. If that day is not logged yet it does
+//   not break the run, which then ends the day before.
+// - seven: how many of the seven days ending there count. It never resets.
+// - week: how many count since the most recent Sunday.
+export function streakCount(
+  style: StreakStyle,
+  counted: Set<string>,
+  endKey: string,
+  endLogged: boolean,
+): number {
+  if (style !== 'row') {
+    const span = style === 'seven' ? 7 : dateOfKey(endKey).getDay() + 1;
+    return recentKeys(endKey, span).filter((key) => counted.has(key)).length;
+  }
+  const end = dateOfKey(endKey);
+  const back = (days: number) =>
+    dateKey(new Date(end.getFullYear(), end.getMonth(), end.getDate() - days));
+  const start = endLogged ? 0 : 1;
+  let count = 0;
+  while (counted.has(back(start + count))) count++;
+  return count;
+}
+
+// The longest stretch of counted days in a row, ever.
+export function bestRun(counted: Set<string>): number {
+  let best = 0;
+  let run = 0;
+  let expected = '';
+  for (const key of [...counted].sort()) {
+    run = key === expected ? run + 1 : 1;
+    best = Math.max(best, run);
+    const date = dateOfKey(key);
+    expected = dateKey(new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1));
+  }
+  return best;
+}
+
+const inMonth = (records: Records, year: number, month: number) =>
+  Object.keys(records).filter((key) => key.startsWith(`${year}-${pad(month + 1)}-`));
+
+// How close together a month's times are, whatever the target: the average
+// distance from the mean time, in minutes. null with fewer than two days.
+export function spreadMinutes(records: Records, year: number, month: number, mode: Mode): number | null {
+  // Measured from noon, so bedtimes either side of midnight sit next to each other.
+  const times = inMonth(records, year, month).map((key) => diffMinutes('12:00', records[key].time, mode));
+  if (times.length < 2) return null;
+  const mean = times.reduce((sum, time) => sum + time, 0) / times.length;
+  return Math.round(times.reduce((sum, time) => sum + Math.abs(time - mean), 0) / times.length);
+}
+
+// month is 0-based, as in Date. `targetOn` gives the current target for a day.
 export function monthStats(
   records: Records,
   year: number,
   month: number,
   mode: Mode,
-  currentTarget: string,
+  targetOn: (key: string) => string,
   applyToPast: boolean,
 ): MonthStats {
-  const prefix = `${year}-${pad(month + 1)}-`;
-  const diffs = Object.keys(records)
-    .filter((key) => key.startsWith(prefix))
-    .map((key) =>
-      diffMinutes(effectiveTarget(records[key], currentTarget, applyToPast), records[key].time, mode),
-    );
+  const diffs = inMonth(records, year, month).map((key) =>
+    diffMinutes(effectiveTarget(records[key], targetOn(key), applyToPast), records[key].time, mode),
+  );
   if (diffs.length === 0) return { logged: 0, onTime: 0, avgLate: null };
   const late = diffs.reduce((sum, diff) => sum + Math.max(0, diff), 0);
   return {
