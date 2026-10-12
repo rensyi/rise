@@ -38,10 +38,8 @@ The Android home-screen widgets:
   <img src="docs/shots/widgets.png" width="482" alt="Two widgets: a small one with the I'm up button, and a wide one with the streak and the last seven days">
 </p>
 
-These pictures come from a mock-up of the app drawn for the web
-(`docs/index.html`), not from a phone. It follows the app closely, but sizes
-and timing differ a little. To try it yourself, download that file and open
-it in a browser: the phone in it works.
+These pictures come from a mock-up of the app drawn for the web, not from a
+phone. It follows the app closely, but sizes and timing differ a little.
 
 ## Disclosure
 
@@ -237,7 +235,7 @@ App.tsx                      state, theme selection, font loading, Shell
 App.test.tsx                 whole-app test
 app.json                     Expo config: app ID, icons, launch screen, plugins
 eas.json                     EAS Build profiles
-jest.global-setup.js         fixed time zone for tests
+jest.global-setup.ts         fixed time zone for tests
 src/
   theme.ts                   colours, font, light and dark themes
   theme.test.ts              unit tests
@@ -269,8 +267,7 @@ src/
     TimeField.test.tsx
 assets/                      icons and the launch image; see assets/README.md
 docs/design.md               design spec, and what is left to check on a phone
-docs/index.html              a working mock-up of the app for the browser
-docs/shots/                  the pictures above, taken from the mock-up
+docs/shots/                  the pictures in this README
 ```
 
 ## Not planned

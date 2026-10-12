@@ -400,7 +400,7 @@ navigation library.
 ```
 App.tsx                      state, theme selection, font loading, Shell
 App.test.tsx                 whole-app test
-jest.global-setup.js         fixed time zone for tests
+jest.global-setup.ts         fixed time zone for tests
 src/theme.ts                 colours, font, light and dark themes
 src/theme.test.ts            unit tests
 src/lib/time.ts              pure logic, no React, no storage
