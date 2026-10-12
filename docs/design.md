@@ -595,14 +595,17 @@ In Expo Go:
 - [ ] A weekend target, on a Saturday or Sunday.
 - [ ] Exporting a backup, then restoring it.
 
-Only in the app's own build:
+Only in the app's own build. The owner installed the first build on an
+Android phone on 2026-10-13 and found these four working:
 
-- [ ] The app icon, in the launcher's different icon shapes, and the themed
-      (single-colour) icon on Android 13 or later.
-- [ ] The launch screen.
-- [ ] The wake-up reminder arriving on Android, with its icon in the status
-      bar, and being skipped on a day already logged.
-- [ ] The two widgets: that they can be added from the widget picker, how
-      they look in both themes and in the Rubik font, that a tap on **I'm
-      up** logs without opening the app, that the app shows that entry when
-      opened, and that the button returns the next morning.
+- [x] The app icon.
+- [x] The launch screen.
+- [x] The wake-up reminder.
+- [x] The two widgets.
+
+Finer points of those four, not yet confirmed one by one:
+
+- [ ] The themed (single-colour) icon on Android 13 or later.
+- [ ] The reminder being skipped on a day already logged.
+- [ ] The widgets in both themes, and the **I'm up** button returning the
+      next morning.

@@ -10,13 +10,14 @@ Waking is an exact moment: you wake, you log it. Rise is built around that one
 tap. Bedtime can be tracked too, but it is optional, means "laid in bed" and
 never affects your wake tracking.
 
-> **Status:** every feature below is built and covered by tests. The first
+> **Status:** beta, version 0.1.0. Expect rough edges, and please report what
+> you find. Every feature below is built and covered by tests. The first
 > version was checked on a phone on 2026-10-12; the later additions have
 > phone checks still to tick at the end of the
 > [design spec](docs/design.md), which describes the app in full. Four
 > things appear only in the app's own build, not in Expo Go: the app icon, the
 > launch screen, the wake-up reminder on Android, and the Android home-screen
-> widgets. None of those four has been tried on a phone yet.
+> widgets. All four were found working on an Android phone on 2026-10-13.
 
 ## Preview
 
@@ -71,8 +72,8 @@ Expo Go has two limits:
 
 - The wake-up reminder does not work in Expo Go on Android, because Expo Go
   there no longer includes notifications. The switch stays off and says why.
-  It is available on an iPhone in Expo Go and in the app's own build on
-  both, but has not yet been tried on a real phone.
+  It works in the app's own build on Android. On an iPhone it has not been
+  tried.
 - Expo Go shows its own icon and launch screen, not Rise's.
 - The home-screen widgets do not exist in Expo Go. They need native code that
   only the app's own build has.

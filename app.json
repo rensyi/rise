@@ -2,7 +2,7 @@
   "expo": {
     "name": "Rise",
     "slug": "rise",
-    "version": "1.0.0",
+    "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -75,6 +75,11 @@
           ]
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "3a641120-7461-4f6f-a4db-ed33c09eb122"
+      }
+    }
   }
 }
