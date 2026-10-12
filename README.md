@@ -1,7 +1,7 @@
 <h1 align="center">
-  Rise
+  <img src="docs/shots/logo.png" width="160" alt="A sun rising over a land of calendar tiles">
   <br>
-  <img src="assets/splash-icon.png" width="240" alt="A sun rising over a land of calendar tiles">
+  Rise
 </h1>
 
 A mobile app for tracking when you wake up.
