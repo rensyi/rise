@@ -1,5 +1,9 @@
 # Rise
 
+<p align="center">
+  <img src="assets/splash-icon.png" width="240" alt="Rise: a sun rising over a land of calendar tiles">
+</p>
+
 A mobile app for tracking when you wake up.
 
 Waking is an exact moment: you wake, you log it. Rise is built around that one
@@ -26,6 +30,12 @@ never affects your wake tracking.
 The first two pictures move, as the app does: the sun on the **I'm up**
 button turns slowly, one turn a minute, and the **In bed** button lets off Zs
 while it waits.
+
+The Android home-screen widgets:
+
+<p>
+  <img src="docs/shots/widgets.png" width="482" alt="Two widgets: a small one with the I'm up button, and a wide one with the streak and the last seven days">
+</p>
 
 These pictures come from a mock-up of the app drawn for the web
 (`docs/index.html`), not from a phone. It follows the app closely, but sizes
