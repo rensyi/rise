@@ -11,6 +11,7 @@ import {
   bestRun,
   countedDays,
   streakCount,
+  streakText,
 } from '../lib/time';
 import { tileColor, tileTextColor } from '../theme';
 import MonthCalendar, { Legend } from './MonthCalendar';
@@ -59,12 +60,7 @@ export default function StreakView({ view, slide, config, streak, hour24, todayK
   const { mode, records, targetOn, endKey } = streak;
   const counted = countedDays(records, mode, config.streakRule, targetOn, config.applyTargetsToPast);
   const count = streakCount(config.streakStyle, counted, endKey, endKey in records);
-  const [value, caption] =
-    config.streakStyle === 'seven'
-      ? [`${count}/7`, 'of the last 7 days']
-      : config.streakStyle === 'week'
-        ? [String(count), 'this week, since Sunday']
-        : [String(count), count === 1 ? 'day in a row' : 'days in a row'];
+  const [value, caption] = streakText(config.streakStyle, count);
   const ink = { color: tileTextColor(4, theme) };
   const month = `${view.year}-${view.month}`;
   const set = (patch: Partial<Config>) => onChange({ ...config, ...patch });

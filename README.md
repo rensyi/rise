@@ -9,34 +9,23 @@ never affects your wake tracking.
 > **Status:** every feature below is built and covered by tests. The first
 > version was checked on a phone on 2026-10-12; the later additions have
 > phone checks still to tick at the end of the
-> [design spec](docs/design.md), which describes the app in full. Three
+> [design spec](docs/design.md), which describes the app in full. Four
 > things appear only in the app's own build, not in Expo Go: the app icon, the
-> launch screen, and the wake-up reminder on Android. The home-screen widget
-> is planned and not built.
+> launch screen, the wake-up reminder on Android, and the Android home-screen
+> widgets. None of those four has been tried on a phone yet.
 
 ## Preview
 
 <p>
-  <img src="docs/shots/today.gif" width="190" alt="Today, with the sun-shaped log button slowly turning, and the last few days">
-  <img src="docs/shots/logged.png" width="190" alt="Today after logging, showing the time and how late it was">
-  <img src="docs/shots/calendar.png" width="190" alt="Calendar, with the month's numbers and each day coloured by how late it was">
-  <img src="docs/shots/streak.png" width="190" alt="The Streak tab, with the streak and the days that count">
-</p>
-<p>
-  <img src="docs/shots/bedtime.png" width="190" alt="Today in Bedtime mode, with the In bed button">
-  <img src="docs/shots/day-sheet.png" width="190" alt="The sheet for changing or deleting one day">
-  <img src="docs/shots/settings.png" width="190" alt="Settings">
-  <img src="docs/shots/calendar-light.png" width="190" alt="Calendar in the light theme">
+  <img src="docs/shots/wake.gif" width="200" alt="Today, with the sun-shaped I'm up button slowly turning">
+  <img src="docs/shots/in-bed.gif" width="200" alt="Today in Bedtime mode, with Zs drifting off the In bed button">
+  <img src="docs/shots/calendar-dark.png" width="200" alt="Calendar in the dark theme, with each day coloured by how late it was">
+  <img src="docs/shots/calendar-light.png" width="200" alt="Calendar in the light theme">
 </p>
 
-The home-screen widgets, which are planned and not built yet:
-
-<p>
-  <img src="docs/shots/widgets.png" width="482" alt="Two widgets: a small one with the log button, and a wide one with the streak and the last seven days">
-</p>
-
-The first picture moves: the sun on the log button turns slowly while it
-waits, one turn a minute, as it does in the app.
+The first two pictures move, as the app does: the sun on the **I'm up**
+button turns slowly, one turn a minute, and the **In bed** button lets off Zs
+while it waits.
 
 These pictures come from a mock-up of the app drawn for the web
 (`docs/index.html`), not from a phone. It follows the app closely, but sizes
@@ -75,6 +64,8 @@ Expo Go has two limits:
   It is available on an iPhone in Expo Go and in the app's own build on
   both, but has not yet been tried on a real phone.
 - Expo Go shows its own icon and launch screen, not Rise's.
+- The home-screen widgets do not exist in Expo Go. They need native code that
+  only the app's own build has.
 
 ## Building
 
@@ -131,6 +122,9 @@ Optional extras:
   you have already logged. It is a notification, not an alarm.
 - **Backup.** Export everything to one file, and restore from it. Restoring
   shows what is in the file and asks before replacing anything.
+- **Home-screen widgets (Android).** A small one with the **I'm up** button,
+  which logs your wake-up with one tap without opening the app, and a wide
+  one with your streak and the last seven days.
 - **Bedtime is opt-in.** Turn it on in Settings to get a separate Bedtime view
   with its own target, colours and stats.
 - **Your clock, your theme.** Times show in 12- or 24-hour format and the app
@@ -218,6 +212,8 @@ cause, and Rise is a habit tracker, not medical advice.
 - expo-sharing, expo-document-picker and expo-file-system for backup and
   restore
 - expo-splash-screen for the launch screen
+- [react-native-android-widget](https://saleksovski.github.io/react-native-android-widget/)
+  for the Android home-screen widgets
 - Jest (`jest-expo`) for tests
 - [EAS Build](https://docs.expo.dev/build/introduction/) for the installable
   app
@@ -245,6 +241,11 @@ src/
   reminder.test.ts           unit tests
   reminder.expo-go.test.ts   unit tests for Expo Go on Android
   backup.ts                  shares a backup file, picks one to restore
+  widget/
+    index.ts                 loads the widgets only where they can run
+    state.ts                 what the widgets show, and the one-tap log
+    widgets.tsx              the two widgets, and what happens on a tap
+    *.test.ts(x)             unit tests
   Shell.tsx                  shared screen state, bottom bar, sheets, messages
   screens/
     TodayScreen.tsx          log button or result, last few days
@@ -261,10 +262,6 @@ docs/index.html              a working mock-up of the app for the browser
 docs/shots/                  the pictures above, taken from the mock-up
 ```
 
-## Planned
-
-A home-screen widget. It cannot run in Expo Go and needs a development build.
-
 ## Not planned
 
-Alarms, sleep duration, accounts or sync, charts.
+Alarms, sleep duration, accounts or sync, charts, and widgets on iPhone.

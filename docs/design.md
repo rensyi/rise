@@ -335,6 +335,31 @@ the app's own code, not `Intl.DateTimeFormat`: `Intl` follows the language
 region and ignores the phone's separate 12/24-hour switch, which was found
 on a real device. Stored times are always 24-hour.
 
+### 3.6 Home-screen widgets (Android)
+
+Two widgets, on Android only and only in the app's own build. They are drawn
+with `react-native-android-widget`, which needs native code Expo Go does not
+have; loading that package in Expo Go would stop the app from opening, so it
+is loaded only where widgets can run.
+
+- **I'm up** (small, 2×2) — before today's wake-up is logged it is the log
+  button: the gold sun with "I'm up" and the target. A tap logs the current
+  time for today without opening the app, by the same rule as the button on
+  Today, so it never overwrites a day that has an entry. After logging it
+  shows "Up at", the time and the lateness label; a tap then opens the app.
+  It always tracks wake-ups, never bedtimes.
+- **Streak** (wide, 4×2) — the streak as set up on the Streak tab, and seven
+  dots for the last seven days in the tile colours, with an empty ring for a
+  day with no entry. It follows wake-ups or bedtimes, as the streak does. A
+  tap opens the app.
+
+Both use the card colour and Rubik, in the theme chosen in Settings; with
+"Device" they follow the phone. They are redrawn when the app's data
+changes, when the log widget is tapped, and every half hour, which is how
+the log button comes back after midnight. When the app returns to the
+foreground it reads its data again, so a wake-up logged from the widget
+shows up there.
+
 ## 4. Research basis for the defaults
 
 No study gives a single best wake-up time. Three findings point to a window:
@@ -388,6 +413,9 @@ src/useRise.ts               state hook
 src/reminder.ts              schedules the wake-up reminder
 src/reminder.test.ts         unit tests
 src/backup.ts                shares a backup file, picks one to restore
+src/widget/index.ts          loads the widgets only where they can run
+src/widget/state.ts          what the widgets show, and the one-tap log
+src/widget/widgets.tsx       the two widgets, and what happens on a tap
 src/Shell.tsx                shared screen state, bottom bar, day sheet
 src/screens/
   TodayScreen.tsx            log button or result, last few days
@@ -529,6 +557,8 @@ of the row, so the seventh day cannot wrap on any screen width.
 - an app left open overnight into a new month
 - the seven days on Today with shortened labels, and the consistency card on Calendar
 - the Streak tab: its three choices, that they are saved, and following bedtimes
+- the widgets: what they show, the one-tap log, that each can be drawn, and
+  that the widget package is never loaded in Expo Go
 - a Saturday logged against the weekend target
 - the reminder turned on, and refused by the phone
 - exporting a backup, restoring one, and refusing a file that is not one
@@ -543,10 +573,9 @@ Layout and colour are checked by running the app.
 Alarms, sleep duration, accounts and sync, charts, a separate target for each
 day of the week, multiple entries per day.
 
-A home-screen widget is planned but not built: it cannot run in Expo Go and
-needs its own build of the app. The streak, consistency score, weekend
-targets, reminder and backup were out of scope at first and were added later
-the same day.
+Widgets on iPhone are also out of scope: they need native Swift code. The
+streak, consistency score, weekend targets, reminder, backup and Android
+widgets were out of scope at first and were added later.
 
 ## 10. Still to check on a phone
 
@@ -573,3 +602,7 @@ Only in the app's own build:
 - [ ] The launch screen.
 - [ ] The wake-up reminder arriving on Android, with its icon in the status
       bar, and being skipped on a day already logged.
+- [ ] The two widgets: that they can be added from the widget picker, how
+      they look in both themes and in the Rubik font, that a tap on **I'm
+      up** logs without opening the app, that the app shows that entry when
+      opened, and that the button returns the next morning.

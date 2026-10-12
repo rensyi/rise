@@ -183,6 +183,13 @@ export function streakCount(
   return count;
 }
 
+// The streak as it is shown: the number, and what it counts.
+export function streakText(style: StreakStyle, count: number): [value: string, caption: string] {
+  if (style === 'seven') return [`${count}/7`, 'of the last 7 days'];
+  if (style === 'week') return [String(count), 'this week, since Sunday'];
+  return [String(count), count === 1 ? 'day in a row' : 'days in a row'];
+}
+
 // The longest stretch of counted days in a row, ever.
 export function bestRun(counted: Set<string>): number {
   let best = 0;

@@ -1,5 +1,6 @@
 import { useCalendars } from 'expo-localization';
 import { useCallback, useEffect, useState } from 'react';
+import { AppState } from 'react-native';
 import {
   type Config,
   DEFAULT_CONFIG,
@@ -19,6 +20,7 @@ import {
 import { type PickedBackup, pickBackup, shareBackup } from './backup';
 import { allowReminder, reminderAvailable, syncReminder } from './reminder';
 import { type Data, load, persist, replaceAll, saveBed, saveConfig, saveWake } from './storage';
+import { refreshWidgets, widgetsAvailable } from './widget';
 
 const SAVE_FAILED = "Couldn't save. Try again.";
 
@@ -57,6 +59,30 @@ export function useRise() {
   useEffect(() => {
     reload();
   }, [reload]);
+
+  // Home-screen widgets (Android, in the app's own build). They are redrawn
+  // whenever what they show changes.
+  useEffect(() => {
+    if (status === 'ready') refreshWidgets({ wake, bed, config }, hour24).catch(() => {});
+  }, [status, wake, bed, config, hour24]);
+
+  // A wake-up logged from a widget is saved while the app is in the
+  // background, so what is stored is read again when the app comes back.
+  useEffect(() => {
+    if (!widgetsAvailable()) return;
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') return;
+      load().then(
+        (data) => {
+          setWake(data.wake);
+          setBed(data.bed);
+          setConfigState(data.config);
+        },
+        () => {},
+      );
+    });
+    return () => subscription.remove();
+  }, []);
 
   // Wake and bedtime are separate stores; each write touches exactly one.
   const write = async (mode: Mode, next: Records, done: string | null) => {

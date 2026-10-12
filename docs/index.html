@@ -153,7 +153,7 @@
   .consist div { flex: 1; min-width: 0; font-weight: 500; }
   .consist small { display: block; color: var(--m-sub); font-size: 11px; font-weight: 400; margin-top: 2px; }
   .consist b { font-size: 26px; font-weight: 500; }
-  .notice { position: absolute; left: 10px; right: 10px; top: 10px; background: var(--m-row); border-radius: 22px; padding: 12px 16px; box-shadow: 0 0 0 1px var(--m-border); transform: translateY(-130%); transition: transform 300ms var(--ease); pointer-events: none; }
+  .notice { position: absolute; left: 10px; right: 10px; top: 10px; background: var(--m-row); border-radius: 22px; padding: 12px 16px; box-shadow: 0 0 0 1px var(--m-border); transform: translateY(calc(-100% - 24px)); transition: transform 300ms var(--ease); pointer-events: none; }
   .notice.show { transform: none; }
   .notice small { display: block; color: var(--m-sub2); font-size: 11px; margin-bottom: 2px; }
   .notice b { display: block; font-weight: 500; }
@@ -713,6 +713,31 @@
   applyTheme();
   render('none');
   if (wants('sheet')) openSheet(NOW, TODAY - 1);
+  if (shot[0]) {
+    // The page's own grey outline around the phone is dropped: none on the
+    // dark theme, the phone's own border colour on the light one.
+    phone.style.borderColor = wants('light') ? THEMES.light.border : 'transparent';
+    // z<tenths of a second> draws the Zs of the "In bed" button as they are
+    // at that moment of a four-second loop, for the frames of its moving picture.
+    const moment = shot.find((part) => /^z\d+$/.test(part));
+    const button = document.querySelector('.sun.disc');
+    const mix = (a, b, k) => a + (b - a) * k;
+    if (moment && button) {
+      for (const start of [0.3, 1.2, 2.6]) {
+        const age = ((((Number(moment.slice(1)) / 10 - start) % 4) + 4) % 4) / 1.8;
+        if (age >= 1) continue;
+        const k = age < 0.15 ? age / 0.15 : (age - 0.15) / 0.85;
+        const [x, y, size, lean] = age < 0.15
+          ? [mix(0, 4, k), mix(0, -7, k), mix(0.4, 1, k), mix(-10, -4, k)]
+          : [mix(4, 30, k), mix(-7, -50, k), mix(1, 1.5, k), mix(-4, 10, k)];
+        const opacity = age < 0.15 ? k : age < 0.7 ? 1 : 1 - (age - 0.7) / 0.3;
+        const z = document.createElement('b');
+        z.textContent = 'Z';
+        z.style.cssText = 'opacity:' + opacity + ';transform:translate(' + x + 'px,' + y + 'px) scale(' + size + ') rotate(' + lean + 'deg)';
+        button.insertBefore(z, button.lastChild);
+      }
+    }
+  }
 </script>
 </body>
 </html>

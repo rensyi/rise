@@ -41,6 +41,39 @@
           "imageWidth": 288,
           "backgroundColor": "#161210"
         }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "fonts": [
+            "./node_modules/@expo-google-fonts/rubik/400Regular/Rubik_400Regular.ttf",
+            "./node_modules/@expo-google-fonts/rubik/500Medium/Rubik_500Medium.ttf"
+          ],
+          "widgets": [
+            {
+              "name": "RiseLog",
+              "label": "Rise: I'm up",
+              "description": "Log your wake-up with one tap",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "previewImage": "./assets/widget-preview-log.png",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "RiseWeek",
+              "label": "Rise: streak",
+              "description": "Your streak and the last seven days",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "previewImage": "./assets/widget-preview-week.png",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
       ]
     ]
   }
