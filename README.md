@@ -6,49 +6,139 @@ Waking is an exact moment: you wake, you log it. Rise is built around that one
 tap. Bedtime can be tracked too, but it is optional, means "laid in bed" and
 never affects your wake tracking.
 
-> **Status:** first version working. The project owner checked it on a
-> phone on 2026-10-12 against the checklist in the
-> [implementation plan](docs/superpowers/plans/2026-10-12-rise.md). The app
-> icons are still placeholders; see [assets/README.md](assets/README.md). The
-> design is in the
-> [design spec](docs/superpowers/specs/2026-10-12-rise-design.md).
+> **Status:** every feature below is built and covered by tests. The first
+> version was checked on a phone on 2026-10-12; the later additions have
+> phone checks still to tick at the end of the
+> [design spec](docs/design.md), which describes the app in full. Three
+> things appear only in the app's own build, not in Expo Go: the app icon, the
+> launch screen, and the wake-up reminder on Android. The home-screen widget
+> is planned and not built.
+
+## Preview
+
+<p>
+  <img src="docs/shots/today.gif" width="190" alt="Today, with the sun-shaped log button slowly turning, and the last few days">
+  <img src="docs/shots/logged.png" width="190" alt="Today after logging, showing the time and how late it was">
+  <img src="docs/shots/calendar.png" width="190" alt="Calendar, with the month's numbers and each day coloured by how late it was">
+  <img src="docs/shots/streak.png" width="190" alt="The Streak tab, with the streak and the days that count">
+</p>
+<p>
+  <img src="docs/shots/bedtime.png" width="190" alt="Today in Bedtime mode, with the In bed button">
+  <img src="docs/shots/day-sheet.png" width="190" alt="The sheet for changing or deleting one day">
+  <img src="docs/shots/settings.png" width="190" alt="Settings">
+  <img src="docs/shots/calendar-light.png" width="190" alt="Calendar in the light theme">
+</p>
+
+The home-screen widgets, which are planned and not built yet:
+
+<p>
+  <img src="docs/shots/widgets.png" width="482" alt="Two widgets: a small one with the log button, and a wide one with the streak and the last seven days">
+</p>
+
+The first picture moves: the sun on the log button turns slowly while it
+waits, one turn a minute, as it does in the app.
+
+These pictures come from a mock-up of the app drawn for the web
+(`docs/index.html`), not from a phone. It follows the app closely, but sizes
+and timing differ a little. To try it yourself, download that file and open
+it in a browser: the phone in it works.
+
+## Disclosure
+
+Rise is a vibe-coded application. It was built by describing what it should
+do to an AI coding assistant, which wrote the code. The idea, the design
+decisions and the checking on a real phone are the author's.
+
+- **Code:** written by an AI assistant. Its logic and main flows are covered
+  by automated tests, but it has not been reviewed line by line by a
+  professional developer.
+- **Colours and font:** not AI-made. The palette is
+  [Flexoki](https://stephango.com/flexoki) by Steph Ango and the typeface is
+  [Rubik](https://fonts.google.com/specimen/Rubik).
 
 ## Getting started
 
 ```bash
 npm install
 npx expo start      # then press a for Android, or scan the QR code with Expo Go
-npm test            # unit tests
+npm test            # unit tests and a whole-app test
 npm run typecheck
 ```
 
+If the app on your phone looks out of date, start it with `npx expo start -c`
+to clear the cached bundle.
+
+Expo Go has two limits:
+
+- The wake-up reminder does not work in Expo Go on Android, because Expo Go
+  there no longer includes notifications. The switch stays off and says why.
+  It is available on an iPhone in Expo Go and in the app's own build on
+  both, but has not yet been tried on a real phone.
+- Expo Go shows its own icon and launch screen, not Rise's.
+
+## Building
+
+Builds run on [EAS Build](https://docs.expo.dev/build/introduction/), so no
+Android SDK is needed on your machine. The app ID is `com.rensyi.rise` on
+both Android and iOS, set in `app.json`. The build profiles are in `eas.json`.
+
+```bash
+npm i -g eas-cli
+eas login
+eas build -p android --profile preview      # an APK to install on a phone
+eas build -p android --profile production   # an AAB for the Play Store
+```
+
+The first build asks to create the EAS project and writes its ID into
+`app.json`. It also asks to generate a signing key; let it.
+
+An iOS build needs a paid Apple developer account.
+
 ## How it works
+
+Logging:
 
 - **One tap to log.** The app opens on Today with one big sun-shaped button.
   Press **I'm up** and the current time is saved for today.
+- **Undo.** The "Logged 06:12" message has an Undo button for five seconds.
+- **Fix it later.** Tap any past day to add, change or delete an entry.
+- **The last few days.** Today lists the past five days at a glance.
+
+The calendar:
+
 - **The calendar is the heat map.** Each day is coloured by how close you woke
   to your target, like GitHub's contribution tiles, but on the calendar days
   themselves.
+- **Monthly stats.** Days logged, days on time, and average minutes late.
+- **Consistency.** A score for how close together the month's times are,
+  whatever your target.
+- **Streak.** A tab on Calendar, set up your way: what makes a day count
+  (logged, within 30 minutes, or on time), and whether to count days in a
+  row, the last seven days, or this week since Sunday.
+
+Targets:
+
 - **Your target, your colours.** The default target is 06:00. Set it to 09:00
   and a 09:00 wake-up gets the strongest colour.
 - **The past stays put.** Changing your target affects new days only. Past
   colours and stats change only if you turn on "Apply targets to past days".
-- **Three places.** Today for logging, Calendar for the month, and Settings,
-  on a floating bar at the bottom.
-- **Fix it later.** Tap any past day to add, change or delete an entry.
-- **The last seven days.** Today lists the past week at a glance.
-- **Consistency.** Calendar shows how close together the month's times are.
-- **Streak.** A tab on Calendar, set up your way: what makes a day count, and
-  whether to count days in a row, the last seven days, or this week.
-- **Weekend targets.** An optional later target for Saturday and Sunday.
-- **Reminder.** An optional notification at your wake-up target.
-- **Backup.** Export everything to one file, and restore from it.
-- **Monthly stats.** Days logged, days on time, and average minutes late.
+- **Weekend targets.** An optional later target for Saturday and Sunday
+  mornings, and for Friday and Saturday nights if you track bedtime.
+
+Optional extras:
+
+- **Reminder.** A notification at your wake-up target. It is skipped on a day
+  you have already logged. It is a notification, not an alarm.
+- **Backup.** Export everything to one file, and restore from it. Restoring
+  shows what is in the file and asks before replacing anything.
+- **Bedtime is opt-in.** Turn it on in Settings to get a separate Bedtime view
+  with its own target, colours and stats.
 - **Your clock, your theme.** Times show in 12- or 24-hour format and the app
   in light or dark. Both follow your phone by default and can be set in
   Settings.
-- **Bedtime is opt-in.** Turn it on in Settings to get a separate Bedtime view
-  with its own target, colours and stats.
+
+The app has three places, on a floating bar at the bottom: Today for logging,
+Calendar for the month, and Settings.
 
 ### Tile colours
 
@@ -70,11 +160,27 @@ theme, set in Rubik. The colours are from
 |---|---|---|
 | Background | `#100F0F` | `#FFFCF0` |
 | Cards | `#1C1B1A` | `#F2F0E5` |
+| Rows on a card | `#282726` | `#E6E4D9` |
 | Text | `#CECDC3` | `#100F0F` |
 | Secondary text | `#878580` | `#575653` |
 
 Tiles are the same in both themes, from on time to latest:
 `#D0A215`, `#AD8301`, `#664D01`, `#3A2D04`.
+
+The shapes follow Material 3 Expressive: large titles, pills and circles, and
+one playful shape, the scalloped sun on the log button. Switches are drawn by
+the app, so they look the same on Android and iPhone.
+
+Movement is short and answers what you just did: the sun turns slowly, the
+"In bed" button lets off Zs, a logged time springs in, calendar tiles pop in
+as a wave, and sheets slide up and back down. With the phone's "reduce
+motion" setting on, none of it plays.
+
+## Your data
+
+Everything is stored on the phone. There is no account and nothing is sent
+anywhere. The only way data leaves the phone is a backup file you export
+yourself.
 
 ## Why 06:00
 
@@ -103,42 +209,62 @@ cause, and Rise is a habit tracker, not medical advice.
   Material 3 components
 - [react-native-paper-dates](https://web-ridge.github.io/react-native-paper-dates/)
   for the Material 3 time picker
-- AsyncStorage for on-device data. No account, no network.
+- react-native-svg for the sun's outline
+- React Native's built-in `Animated` for all movement; no animation library
+- [Rubik](https://fonts.google.com/specimen/Rubik) through
+  `@expo-google-fonts/rubik`
+- AsyncStorage for on-device data
+- expo-notifications for the reminder, scheduled on the phone itself
+- expo-sharing, expo-document-picker and expo-file-system for backup and
+  restore
+- expo-splash-screen for the launch screen
+- Jest (`jest-expo`) for tests
+- [EAS Build](https://docs.expo.dev/build/introduction/) for the installable
+  app
 
 ## Structure
 
 ```
+index.ts                     entry point
 App.tsx                      state, theme selection, font loading, Shell
 App.test.tsx                 whole-app test
+app.json                     Expo config: app ID, icons, launch screen, plugins
+eas.json                     EAS Build profiles
 jest.global-setup.js         fixed time zone for tests
 src/
   theme.ts                   colours, font, light and dark themes
   theme.test.ts              unit tests
-  lib/time.ts                pure logic: levels, labels, month stats
+  lib/time.ts                pure logic: levels, labels, targets, stats, streak
   lib/time.test.ts           unit tests
   lib/sun.ts                 outline of the wake button
   lib/sun.test.ts            unit tests
-  storage.ts                 load and save
+  storage.ts                 load, save, and the backup file's format
   storage.test.ts            unit tests
   useRise.ts                 state hook
   reminder.ts                schedules the wake-up reminder
   reminder.test.ts           unit tests
+  reminder.expo-go.test.ts   unit tests for Expo Go on Android
   backup.ts                  shares a backup file, picks one to restore
-  Shell.tsx                  shared screen state, bottom bar, day sheet
+  Shell.tsx                  shared screen state, bottom bar, sheets, messages
   screens/
     TodayScreen.tsx          log button or result, last few days
-    CalendarScreen.tsx       month, stats, tiles
+    CalendarScreen.tsx       month, with Wake, Bedtime and Streak tabs
     SettingsScreen.tsx       grouped settings
   components/
     BigTitle.tsx  Panel.tsx  Pills.tsx  SunButton.tsx  LatenessPill.tsx
     NavBar.tsx  DaySheet.tsx  TimeField.tsx  MonthCalendar.tsx  StatsRow.tsx
-    Motion.tsx  Sheet.tsx  RestoreSheet.tsx  StreakView.tsx
-assets/                      placeholder icons; see assets/README.md
-docs/superpowers/specs/      design spec
-docs/superpowers/plans/      implementation plan
-docs/prototype/              original web prototype, kept for reference
+    Motion.tsx  Sheet.tsx  RestoreSheet.tsx  StreakView.tsx  Toggle.tsx
+    TimeField.test.tsx
+assets/                      icons and the launch image; see assets/README.md
+docs/design.md               design spec, and what is left to check on a phone
+docs/index.html              a working mock-up of the app for the browser
+docs/shots/                  the pictures above, taken from the mock-up
 ```
+
+## Planned
+
+A home-screen widget. It cannot run in Expo Go and needs a development build.
 
 ## Not planned
 
-Alarms, sleep duration, streaks, accounts or sync, export, widgets, charts.
+Alarms, sleep duration, accounts or sync, charts.

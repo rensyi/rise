@@ -17,8 +17,8 @@ export function watchReduceMotion() {
   return () => subscription.remove();
 }
 
-export const EASE = Easing.bezier(0.2, 0, 0, 1);
-const SPRING = { tension: 220, friction: 16, useNativeDriver: true };
+const EASE = Easing.bezier(0.2, 0, 0, 1);
+export const SPRING = { tension: 220, friction: 16, useNativeDriver: true };
 
 type EnterProps = {
   children?: ReactNode;

@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { Button, type MD3Theme, Text, useTheme } from 'react-native-paper';
 import type { PickedBackup } from '../backup';
-import { countOf } from '../lib/time';
+import { countOf, dateOfKey } from '../lib/time';
 import Sheet from './Sheet';
 
 type Props = {
@@ -16,10 +16,10 @@ export default function RestoreSheet({ backup, bottomInset, onRestore, onDismiss
   const theme = useTheme<MD3Theme>();
   const { wake, bed } = backup.data;
   const latest = [...Object.keys(wake), ...Object.keys(bed)].sort().at(-1);
-  const [year, month, day] = (latest ?? '').split('-').map(Number);
   const upTo = latest
-    ? `, up to ${new Date(year, month - 1, day).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}`
+    ? `, up to ${dateOfKey(latest).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}`
     : '';
+  const summary = `${countOf(wake, 'wake-up')} and ${countOf(bed, 'bedtime')}${upTo}.`;
 
   return (
     <Sheet bottomInset={bottomInset} onDismiss={onDismiss}>
@@ -30,7 +30,7 @@ export default function RestoreSheet({ backup, bottomInset, onRestore, onDismiss
           </Text>
           <Text variant="bodyLarge">{backup.name}</Text>
           <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-            {`${countOf(wake, 'wake-up')} and ${countOf(bed, 'bedtime')}${upTo}. This replaces everything on this phone.`}
+            {`${summary} This replaces everything on this phone.`}
           </Text>
           <View style={styles.actions}>
             <Button textColor={theme.colors.onSurface} onPress={() => leave(onDismiss)}>

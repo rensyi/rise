@@ -28,6 +28,7 @@ export default function StatsRow({ stats, spread }: Props) {
   // One point is lost for each minute the times vary by.
   const score = spread === null ? '—' : `${Math.max(0, 100 - spread)}%`;
   const hint = spread === null ? 'Needs two logged days' : `Your times vary by about ${formatDuration(spread)}`;
+  const said = `${spread === null ? '' : `${score}, `}${hint[0].toLowerCase()}${hint.slice(1)}`;
 
   return (
     <View style={styles.wrap}>
@@ -55,7 +56,7 @@ export default function StatsRow({ stats, spread }: Props) {
         elevation={0}
         style={[styles.wide, { backgroundColor: card.bg }]}
         accessible
-        accessibilityLabel={`Consistency: ${spread === null ? '' : `${score}, `}${hint[0].toLowerCase()}${hint.slice(1)}`}
+        accessibilityLabel={`Consistency: ${said}`}
       >
         <View style={styles.wideText}>
           <Text variant="titleMedium">Consistency</Text>

@@ -148,7 +148,7 @@ test('first run opens on Today with the log button and no bedtime tabs', async (
   expect(text).toContain('Monday');
   expect(text).toContain("I'm up");
   expect(text).toContain('Target 6:00 AM');
-  expect(text).toContain('Last seven days');
+  expect(text).toContain('Last few days');
   for (const place of ['Today', 'Calendar', 'Settings']) expect(isShown(place)).toBe(true);
   expect(isShown('Bedtime')).toBe(false);
 });
@@ -271,6 +271,24 @@ test('bedtime tracking adds Wake and Bedtime tabs, and turning it off returns to
   await change(toggle('Track bedtime'), true);
   await go('Today');
   expect(isShown("I'm up")).toBe(true);
+});
+
+test('a switch flips when it is pressed, and says whether it is on', async () => {
+  await mount();
+  await go('Settings');
+  const bedtime = () =>
+    find(
+      'the Track bedtime switch',
+      (n) =>
+        n.props.accessibilityRole === 'switch' &&
+        n.props.accessibilityLabel === 'Track bedtime' &&
+        typeof n.props.onPress === 'function',
+    );
+  expect(bedtime().props.accessibilityState).toEqual({ checked: false });
+
+  await press(bedtime());
+  expect(bedtime().props.accessibilityState).toEqual({ checked: true });
+  expect((await stored('rise.config')).bedEnabled).toBe(true);
 });
 
 test('the time format setting changes how times are shown', async () => {
@@ -426,19 +444,19 @@ test('the streak can follow bedtimes when bedtime tracking is on', async () => {
   expect((await stored('rise.config')).streakFor).toBe('bed');
 });
 
-test('Today lists the last seven days, with lateness shortened to the hour', async () => {
-  await AsyncStorage.setItem('rise.wake', JSON.stringify({ '2026-10-06': at('11:23') }));
+test('Today lists the last five days, with lateness shortened to the hour', async () => {
+  await AsyncStorage.setItem('rise.wake', JSON.stringify({ '2026-10-08': at('11:23') }));
   await mount();
 
-  // Monday 12 back to Tuesday 6, and no further.
-  expect(screen()).toContain('Last seven days');
-  expect(screen()).toContain('6 Tuesday');
-  expect(screen()).not.toContain('5 Monday');
+  // Monday 12 back to Thursday 8, and no further.
+  expect(screen()).toContain('Last few days');
+  expect(screen()).toContain('8 Thursday');
+  expect(screen()).not.toContain('7 Wednesday');
   expect(screen()).toContain('"5hrs late"');
   expect(screen()).not.toContain('"5hrs 23mins late"');
 
   // The day's own sheet still gives the full figure.
-  await press(labelled('the row for the 6th', (label) => label.startsWith('6 Tuesday')));
+  await press(labelled('the row for the 8th', (label) => label.startsWith('8 Thursday')));
   expect(screen()).toContain('"5hrs 23mins late"');
 });
 

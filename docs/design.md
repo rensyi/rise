@@ -1,14 +1,8 @@
 # Rise — Design Spec
 
 Date: 2026-10-12
-Status: approved 2026-10-12; sections 3.5, 5, 7 and 8 amended while writing
-the implementation plan (`docs/superpowers/plans/2026-10-12-rise.md`);
-sections 3.4, 3.5, 5 and 6 amended after device testing the same day (time
-format and theme settings); section 3.5 rewritten for the Ink and gold palette and
-Rubik font; sections 3.1, 3.3, 3.4 and 5 rewritten for the three-screen
-Material 3 Expressive layout; section 3.5 amended for the corrected sun shape
-and for motion; sections 3.1, 3.4, 5, 6, 8 and 9 amended for the streak,
-consistency score, weekend targets, reminder and backup
+Status: approved 2026-10-12 and kept up to date since. It describes the app
+as it is now. Section 10 lists what is still to be checked on a phone.
 
 ## 1. Purpose
 
@@ -57,7 +51,7 @@ When bedtime tracking is on (3.4), Today and Calendar both show **Wake** and
   it shows the current target.
 - **After logging** — the button is replaced by a card with "You got up at"
   (or "You went to bed at"), the time in large type, and the lateness label.
-- **Last seven days** — seven rows, the day a tap would log to and the six
+- **Last few days** — five rows, the day a tap would log to and the four
   before it, each with its time and lateness label or "No entry". Tapping a
   row opens the day sheet (3.3). To keep the rows short, the label here drops the minutes
   once there is a full hour ("5hrs early", not "5hrs 23mins early"); the
@@ -313,7 +307,7 @@ design language.
   for 1.8s, and the next leaves 0.75 to 1.6s later, so they come at uneven
   moments and never overlap. Either button shrinks a little while pressed.
 - **After logging** — the result card springs in, its lateness label a beat
-  later, and the day's row in "Last seven days" springs in with it. Changing
+  later, and the day's row in "Last few days" springs in with it. Changing
   between Wake and Bedtime springs the button or card in again.
 - **Pills** — shrink a little while pressed; the one just chosen dips and
   springs back.
@@ -322,8 +316,11 @@ design language.
   was reached from. A tile pops again when a save or delete changes its
   colour.
 - **Day sheet** — slides up from the bottom edge, and back down when closed.
-- **Still on purpose** — theme changes, the time picker, the stat numbers
-  and the switches.
+- **Switches** — the app draws its own, in the Material 3 shape, so they
+  look the same on Android and iPhone: an outlined track with a small dot
+  when off, an ink-filled track with a larger dot when on. The dot springs
+  across and grows.
+- **Still on purpose** — theme changes, the time picker and the stat numbers.
 - **Reduce motion** — when the device asks for less motion, none of this
   plays: the sun stays still and the Zs stand in a rising line.
 
@@ -408,6 +405,7 @@ src/components/
   DaySheet.tsx               add, edit, delete one day
   RestoreSheet.tsx           confirms restoring a backup
   StreakView.tsx             the Streak tab of Calendar
+  Toggle.tsx                 the on/off switch
   TimeField.tsx              time button or large time + time picker
   TimeField.test.tsx         unit test
   MonthCalendar.tsx          grid of tiles, legend
@@ -550,11 +548,28 @@ needs its own build of the app. The streak, consistency score, weekend
 targets, reminder and backup were out of scope at first and were added later
 the same day.
 
-## 10. Prototype
+## 10. Still to check on a phone
 
-`docs/prototype/rise-tracker.jsx` is the web prototype this design grew
-from. It stays as a reference. It differs from this spec in these ways: six
-grey lateness steps instead of four gold ones, a dark look only with no light
-theme,
-DM Mono and DM Serif Display instead of Rubik, bedtime always visible, no one-tap logging, target
-changes re-colouring all history, and silent save failures.
+Everything here is covered by automated tests, but has not yet been seen on a
+real screen.
+
+In Expo Go:
+
+- [ ] Both themes: the bottom bar, the Settings page with its switches, and
+      the time picker.
+- [ ] The sun's shape, each movement (3.5), and the app with the phone's
+      "reduce motion" or "remove animations" setting on.
+- [ ] Logging: the "Logged" message in the theme's colours, and its Undo.
+- [ ] Today: the five-day list and its shortened labels.
+- [ ] Calendar: the consistency card, and the Streak tab with its three
+      choices.
+- [ ] A weekend target, on a Saturday or Sunday.
+- [ ] Exporting a backup, then restoring it.
+
+Only in the app's own build:
+
+- [ ] The app icon, in the launcher's different icon shapes, and the themed
+      (single-colour) icon on Android 13 or later.
+- [ ] The launch screen.
+- [ ] The wake-up reminder arriving on Android, with its icon in the status
+      bar, and being skipped on a day already logged.

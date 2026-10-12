@@ -7,9 +7,11 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rensyi.rise"
     },
     "android": {
+      "package": "com.rensyi.rise",
       "adaptiveIcon": {
         "backgroundColor": "#161210",
         "foregroundImage": "./assets/android-icon-foreground.png",

@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rise preview</title>
+<meta name="description" content="An interactive preview of Rise, a wake-up tracker.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600&display=swap">
+<style>
+  /* Base */
+  :root { color-scheme: light; }
+  body { margin: 0; }
+  [hidden] { display: none !important; }
+  a { color: inherit; }
+
+  /* Layout: one working phone you can tap, with the list of where each new feature lives beside it; the two widgets below. */
+  :root {
+    --bg: #f5f5f3;
+    --fg: #1d1d1b;
+    --muted: #5d5d58;
+    --rule: #d9d8d3;
+    --gold: #D0A215;
+    --on-gold: #100F0F;
+    --font: "Rubik", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --spring: cubic-bezier(.34, 1.56, .64, 1);
+    --ease: cubic-bezier(.2, 0, 0, 1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #151514; --fg: #ecece9; --muted: #a9a9a3; --rule: #33332f; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --bg: #151514; --fg: #ecece9; --muted: #a9a9a3; --rule: #33332f; color-scheme: dark; }
+
+  body { background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 16px; line-height: 1.55; padding-inline: 20px; padding-block: 40px 64px; }
+  main { max-width: 1000px; margin-inline: auto; display: flex; flex-direction: column; gap: 48px; }
+  h1 { font-size: 30px; font-weight: 600; line-height: 1.2; margin: 0; text-wrap: balance; }
+  h2 { font-size: 20px; font-weight: 600; line-height: 1.25; margin: 0; text-wrap: balance; }
+  h3 { font-size: 13px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0; }
+  p { margin: 0; max-width: 65ch; }
+  ul { margin: 0; padding-left: 20px; max-width: 65ch; display: flex; flex-direction: column; gap: 8px; }
+  .stack { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  .lede, .note { color: var(--muted); }
+  .note { font-size: 14px; }
+  .divided { border-top: 1px solid var(--rule); padding-top: 28px; }
+  .demo { display: flex; flex-wrap: wrap; gap: 32px 48px; align-items: flex-start; }
+  .demo > .stack { flex: 1 1 320px; }
+  .stage { flex: none; max-width: 100%; display: flex; flex-direction: column; gap: 10px; }
+  #reset { align-self: center; font: inherit; font-size: 14px; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--rule); background: none; color: var(--fg); cursor: pointer; }
+
+  /* The streak rule picker, on the page */
+  .pick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .pick button { font: inherit; font-size: 14px; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--rule); background: none; color: var(--fg); cursor: pointer; }
+  .pick button[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+
+  /* Home-screen widgets. They take the phone's colours. */
+  .widgets { display: flex; flex-wrap: wrap; gap: 16px; }
+  .widget { box-sizing: border-box; height: 150px; max-width: 100%; border-radius: 28px; background: var(--m-card); color: var(--m-text); border: 1px solid var(--m-border); padding: 16px; font-size: 13px; line-height: 1.3; display: flex; }
+  .widget.small { width: 150px; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+  .widget.wide { width: 316px; align-items: center; gap: 16px; }
+  .widget .time { font-size: 34px; font-weight: 500; line-height: 1; letter-spacing: -0.02em; }
+  .widget .count b { display: block; font-size: 34px; font-weight: 500; line-height: 1.1; }
+  .mini { position: relative; width: 112px; height: 112px; display: grid; place-items: center; color: var(--on-gold); font: inherit; font-weight: 500; font-size: 16px; border: 0; background: none; padding: 0; cursor: pointer; }
+  .mini i { position: absolute; inset: 0; background: var(--gold); clip-path: var(--sun); }
+  .mini span { position: relative; }
+  .week { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; color: var(--m-sub); font-size: 11px; }
+  .week i { display: block; aspect-ratio: 1; border-radius: 50%; border: 1px solid var(--m-border); box-sizing: border-box; margin-bottom: 4px; }
+
+  /* The phone. Its colours come from --m-* variables, set for the theme it shows. */
+  .phone { width: 320px; max-width: 100%; height: 660px; box-sizing: border-box; margin: 0; background: var(--m-bg); color: var(--m-text); border: 1px solid var(--rule); border-radius: 34px; font-size: 13px; line-height: 1.3; position: relative; overflow: hidden; }
+  :where(.phone) button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: inherit; }
+  .phone button:focus-visible { outline: 2px solid var(--m-text); outline-offset: 2px; }
+  .phone svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; position: relative; }
+  .view { position: absolute; inset: 0; box-sizing: border-box; padding: 28px 14px 108px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; scrollbar-width: none; }
+
+  .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; padding-inline: 4px; }
+  .head .big { font-size: 38px; font-weight: 500; line-height: 1; letter-spacing: -0.02em; }
+  .head .small { color: var(--m-sub); font-size: 15px; margin-top: 6px; }
+  .head .tools { display: flex; gap: 6px; }
+  .round { width: 38px; height: 38px; border-radius: 50%; background: var(--m-row); display: inline-flex; align-items: center; justify-content: center; }
+  .round:disabled { opacity: 0.38; cursor: default; }
+
+  .sun { position: relative; align-self: center; flex: none; width: 184px; height: 184px; display: grid; place-items: center; color: var(--on-gold); margin-block: 4px; }
+  .sun i { position: absolute; inset: 0; background: var(--gold); clip-path: var(--sun); animation: spin 60s linear infinite; }
+  .sun.disc i { inset: 6px; clip-path: none; border-radius: 50%; animation: none; }
+  .sun span { position: relative; font-size: 25px; font-weight: 500; text-align: center; }
+  .sun small { display: block; font-size: 12px; font-weight: 400; margin-top: 2px; }
+  .sun b { position: absolute; left: 148px; top: 14px; font-size: 22px; font-weight: 500; color: var(--m-text); opacity: 0; pointer-events: none; animation: zzz 1.8s linear forwards; }
+  .result { background: var(--m-card); border-radius: 34px; padding: 22px 20px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin-block: 4px; }
+  .result .time { font-size: 54px; font-weight: 500; line-height: 1; letter-spacing: -0.02em; }
+  .cap { color: var(--m-sub); }
+
+  .panel { background: var(--m-card); border-radius: 28px; padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+  .panel .cap { padding: 4px 8px 6px; font-weight: 500; }
+  .rowcard { background: var(--m-row); border-radius: 7px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; min-height: 22px; }
+  .panel > .rowcard:nth-child(1 of .rowcard) { border-top-left-radius: 18px; border-top-right-radius: 18px; }
+  .panel > .rowcard:nth-last-child(1 of .rowcard:not([hidden])) { border-bottom-left-radius: 18px; border-bottom-right-radius: 18px; }
+  .rowcard .name, .rowcard .label { flex: 1; min-width: 0; }
+  .rowcard .sub { color: var(--m-sub2); }
+  .rowcard small { display: block; color: var(--m-sub2); font-size: 11px; margin-top: 2px; }
+  .rowcard.tall { flex-direction: column; align-items: stretch; gap: 9px; }
+
+  .pill { display: inline-block; border-radius: 999px; padding: 5px 12px; font-weight: 500; white-space: nowrap; }
+  .tabs, .seg { display: flex; gap: 6px; }
+  .tabs button { border-radius: 999px; padding: 9px 20px; font-weight: 500; background: var(--m-card); }
+  .seg button { flex: 1; text-align: center; padding: 8px 2px; border-radius: 999px; background: var(--m-card); font-weight: 500; }
+  .tabs button.on, .seg button.on { background: var(--m-text); color: var(--m-bg); }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat { background: var(--m-card); border-radius: 24px; padding: 11px 4px; text-align: center; }
+  .stat b { display: block; font-size: 22px; font-weight: 500; }
+  .stat.win { background: var(--gold); color: var(--on-gold); border-radius: 999px; }
+  .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; font-variant-numeric: tabular-nums; padding: 2px; }
+  .grid .wd { text-align: center; color: var(--m-sub); font-size: 11px; padding-bottom: 2px; }
+  .grid .day { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: 12px; border: 1px solid var(--m-border); box-sizing: border-box; }
+  .grid .day.filled { border-color: transparent; }
+  .grid .day.today { border: 2px solid var(--m-text); }
+  .grid .day:disabled { opacity: 0.38; cursor: default; }
+  .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 10px; color: var(--m-sub); font-size: 11px; }
+  .legend span { display: inline-flex; align-items: center; gap: 4px; }
+  .legend i { width: 10px; height: 10px; border-radius: 50%; }
+
+  .nav { position: absolute; left: 14px; right: 14px; bottom: 14px; background: var(--m-card); border-radius: 32px; padding: 10px 8px; display: grid; grid-template-columns: repeat(3, 1fr); box-shadow: 0 0 0 1px var(--m-border); }
+  .nav button { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--m-sub); font-size: 12px; }
+  .nav button span { position: relative; padding: 5px 20px; display: inline-flex; }
+  .nav button span::before { content: ""; position: absolute; inset: 0; border-radius: 999px; background: var(--m-row); opacity: 0; transform: scaleX(0.4); transition: transform 340ms var(--spring), opacity 160ms; }
+  .nav button.on { color: var(--m-text); font-weight: 500; }
+  .nav button.on span::before { opacity: 1; transform: none; }
+
+  .btn { display: inline-block; background: var(--m-text); color: var(--m-bg); border-radius: 999px; padding: 9px 20px; font-weight: 500; white-space: nowrap; }
+  .btn.text { background: none; color: var(--m-text); padding-inline: 10px; }
+  .btn.text.danger { color: var(--m-danger); margin-right: auto; }
+  .switch { flex: none; width: 44px; height: 26px; border-radius: 999px; border: 2px solid var(--m-sub2); position: relative; box-sizing: border-box; transition: background 160ms, border-color 160ms; }
+  .switch::after { content: ""; position: absolute; top: 5px; left: 5px; width: 12px; height: 12px; border-radius: 50%; background: var(--m-sub2); transition: transform 240ms var(--spring), background 160ms; }
+  .switch.on { background: var(--m-text); border-color: var(--m-text); }
+  .switch.on::after { background: var(--m-bg); transform: translateX(18px) scale(1.4); }
+
+  .scrim { position: absolute; inset: 0; background: var(--m-scrim); opacity: 0; pointer-events: none; transition: opacity 220ms; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--m-card); border-radius: 36px 36px 0 0; padding: 12px 22px 26px; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; transform: translateY(105%); transition: transform 240ms cubic-bezier(.4, 0, 1, 1); }
+  .sheet-open .scrim { opacity: 1; pointer-events: auto; }
+  .sheet-open .sheet { transform: none; transition: transform 440ms cubic-bezier(.2, .9, .25, 1); }
+  .sheet .grab { align-self: center; width: 36px; height: 4px; border-radius: 2px; background: var(--m-sub); opacity: 0.6; margin-bottom: 4px; }
+  .sheet .title { font-size: 32px; font-weight: 500; line-height: 1.1; letter-spacing: -0.01em; }
+  .sheet .timebtn { align-self: stretch; background: var(--m-row); border-radius: 26px; padding: 16px; text-align: center; font-size: 42px; font-weight: 500; line-height: 1; letter-spacing: -0.02em; }
+  .sheet .actions { align-self: stretch; display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 4px; }
+  .snack { position: absolute; left: 14px; right: 14px; bottom: 104px; background: var(--m-row); color: var(--m-text); box-shadow: 0 0 0 1px var(--m-border); border-radius: 14px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; opacity: 0; transform: translateY(10px); transition: opacity 200ms, transform 200ms; pointer-events: none; }
+  .snack.show { opacity: 1; transform: none; pointer-events: auto; }
+  .snack button { margin-left: auto; font-weight: 500; padding: 2px 4px; }
+
+  /* New features */
+  .streakcard { background: var(--gold); color: var(--on-gold); border-radius: 34px; padding: 18px 22px; display: flex; align-items: center; gap: 16px; }
+  .streakcard b { font-size: 54px; font-weight: 500; line-height: 1; letter-spacing: -0.02em; }
+  .streakcard div { font-weight: 500; font-size: 15px; }
+  .streakcard small { display: block; font-weight: 400; font-size: 12px; margin-top: 2px; }
+  .consist { background: var(--m-card); border-radius: 24px; padding: 12px 18px; display: flex; align-items: center; gap: 12px; }
+  .consist div { flex: 1; min-width: 0; font-weight: 500; }
+  .consist small { display: block; color: var(--m-sub); font-size: 11px; font-weight: 400; margin-top: 2px; }
+  .consist b { font-size: 26px; font-weight: 500; }
+  .notice { position: absolute; left: 10px; right: 10px; top: 10px; background: var(--m-row); border-radius: 22px; padding: 12px 16px; box-shadow: 0 0 0 1px var(--m-border); transform: translateY(-130%); transition: transform 300ms var(--ease); pointer-events: none; }
+  .notice.show { transform: none; }
+  .notice small { display: block; color: var(--m-sub2); font-size: 11px; margin-bottom: 2px; }
+  .notice b { display: block; font-weight: 500; }
+
+  /* Motion. Every keyframe starts from "hidden" and ends at the normal resting look. */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes zzz {
+    0% { opacity: 0; transform: scale(0.4) rotate(-10deg); }
+    15% { opacity: 1; transform: translate(4px, -7px) scale(1) rotate(-4deg); }
+    70% { opacity: 1; }
+    100% { opacity: 0; transform: translate(30px, -50px) scale(1.5) rotate(10deg); }
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+  @keyframes pop { from { opacity: 0; transform: scale(0.84); } }
+  @keyframes bump { from { transform: scale(0.9); } }
+  @keyframes fromRight { from { opacity: 0; transform: translateX(24px); } }
+  @keyframes fromLeft { from { opacity: 0; transform: translateX(-24px); } }
+  .press { transition: transform 320ms var(--spring); }
+  .press:active { transform: scale(0.95); transition-duration: 80ms; }
+  .sun.press:active { transform: scale(0.92); }
+  .view.enter { animation: rise 300ms var(--ease) backwards; }
+  .pop { animation: pop 420ms var(--spring) backwards; }
+  .result.pop .pill { animation: pop 360ms var(--spring) 180ms backwards; }
+  .bump { animation: bump 320ms var(--spring); }
+  .grid.next, .head.next .big { animation: fromRight 260ms var(--ease) backwards; }
+  .grid.prev, .head.prev .big { animation: fromLeft 260ms var(--ease) backwards; }
+  .grid.wave .day { animation: pop 280ms var(--spring) calc(var(--i) * 12ms) backwards; }
+  @media (prefers-reduced-motion: reduce) {
+    .phone, .phone *, .phone *::before, .phone *::after { animation: none !important; transition: none !important; }
+    /* Without movement the three letters stand still in a rising line. */
+    .sun b { opacity: 1; }
+    .sun b:nth-of-type(2) { transform: translate(13px, -20px) scale(1.2); }
+    .sun b:nth-of-type(3) { transform: translate(28px, -44px) scale(1.45); }
+  }
+
+  /* Picture mode (#shot=...): only the phone, or only the widgets, with nothing around them and nothing moving. */
+  body.shot { padding: 0; background: transparent; }
+  body.shot main { max-width: none; gap: 0; }
+  body.shot main > * { display: none; }
+  body.shot main > .demo { display: block; }
+  body.shot .demo > .stack, body.shot #reset { display: none; }
+  body.shot .phone, body.shot .phone * { animation: none !important; transition: none !important; }
+  body.shot .sun i { transform: rotate(var(--turn, 0deg)); }
+  body.shot-widgets main > .demo { display: none; }
+  body.shot-widgets main > section:has(#widgets) { display: block; border: 0; padding: 0; }
+  body.shot-widgets section:has(#widgets) > :not(#widgets) { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <header class="stack">
+    <h1>Rise, in your browser</h1>
+    <p class="lede">An interactive preview of Rise, a wake-up tracker for Android and iPhone. The phone below works: tap the sun, the bottom bar, a calendar day and the settings. It is a mock-up drawn for the web, so sizes and timing differ a little from the real app.</p>
+    <p class="note" id="reduced" hidden>Your device asks for reduced motion, so the movement is switched off on this page. The app switches it off in the same way.</p>
+  </header>
+
+  <section class="demo">
+    <div class="stage">
+      <figure class="phone" id="phone" aria-label="Working mock-up of Rise">
+        <div class="view" id="view"></div>
+        <div class="nav" id="nav"></div>
+        <div class="snack" id="snack" role="status"></div>
+        <div class="notice" id="notice" role="status"></div>
+        <div class="scrim" id="scrim"></div>
+        <div class="sheet" id="sheet" inert></div>
+      </figure>
+      <button type="button" id="reset">Undo today's log, to tap the sun again</button>
+    </div>
+
+    <div class="stack">
+      <h3>Things to try</h3>
+      <ul>
+        <li><strong>Log a wake-up:</strong> tap the sun on Today. The message that appears has an Undo button.</li>
+        <li><strong>Bedtime:</strong> tap Bedtime on Today. The button lets off Zs while it waits.</li>
+        <li><strong>The month:</strong> open Calendar. Each day is coloured by how close it was to the target. Tap a day to change or delete it.</li>
+        <li><strong>Consistency:</strong> the card under the three numbers on Calendar.</li>
+        <li><strong>Streak:</strong> the third tab on Calendar, with three choices for how it counts.</li>
+        <li><strong>Settings:</strong> targets, weekend targets, the reminder, time format, theme and backup.</li>
+      </ul>
+      <p class="note">Change the theme from Settings inside the phone; the widgets below follow it. The data here is made up, and it resets when the page reloads.</p>
+    </div>
+  </section>
+
+  <section class="stack divided">
+    <h2>Home-screen widgets</h2>
+    <p>Planned, not built yet. The small one is the log button: tap it here and the phone above logs too. The wide one shows the streak and the last seven days.</p>
+    <div class="widgets" id="widgets"></div>
+    <p class="note"><a href="https://github.com/rensyi/rise">Rise on GitHub</a></p>
+  </section>
+</main>
+
+<script>
+  // Flexoki values, as used in the app.
+  const THEMES = {
+    dark:  { bg: '#100F0F', card: '#1C1B1A', row: '#282726', text: '#CECDC3', sub: '#878580', sub2: '#B7B5AC', border: '#343331', danger: '#E8705F', scrim: 'rgba(0, 0, 0, 0.62)' },
+    light: { bg: '#FFFCF0', card: '#F2F0E5', row: '#E6E4D9', text: '#100F0F', sub: '#575653', sub2: '#575653', border: '#DAD8CE', danger: '#AF3029', scrim: 'rgba(16, 15, 15, 0.42)' },
+  };
+  // Index 0 is level 4 (on time).
+  const TILES = [
+    { fill: '#D0A215', num: '#100F0F', label: 'On time' },
+    { fill: '#AD8301', num: '#100F0F', label: 'Up to 30m late' },
+    { fill: '#664D01', num: '#CECDC3', label: 'Up to 60m late' },
+    { fill: '#3A2D04', num: '#CECDC3', label: 'Later' },
+  ];
+  const tile = (level) => TILES[4 - level];
+  // Example time and label for each level, per mode.
+  const SAMPLE = {
+    wake: { target: '06:00', 4: ['05:55', '5mins early'], 3: ['06:12', '12mins late'], 2: ['06:50', '50mins late'], 1: ['08:10', '2hrs 10mins late'] },
+    bed:  { target: '22:00', 4: ['21:50', '10mins early'], 3: ['22:10', '10mins late'], 2: ['22:45', '45mins late'], 1: ['23:40', '1hr 40mins late'] },
+  };
+  const MINS = { 4: 0, 3: 12, 2: 50, 1: 130 };
+  // "Today" is Monday 12 October 2026. September is all in the past, November all ahead.
+  const MONTHS = [
+    { name: 'September', index: 8, days: 30, blanks: 2, today: 99 },
+    { name: 'October', index: 9, days: 31, blanks: 4, today: 12 },
+    { name: 'November', index: 10, days: 30, blanks: 0, today: 0 },
+  ];
+  const NOW = 1, TODAY = 12;
+  const fill = (pattern) => MONTHS.map((m) => {
+    const out = {};
+    for (let d = 1; d <= m.days && d < m.today; d++) if (pattern[d % pattern.length]) out[d] = pattern[d % pattern.length];
+    return out;
+  });
+  const freshData = () => ({ wake: fill([4, 3, 4, 0, 4, 2, 4, 4, 1, 3]), bed: fill([3, 4, 0, 4, 2, 4, 3, 4, 4, 1]) });
+  let DATA = freshData();
+
+  const state = { tab: 'today', mode: 'wake', month: NOW, bedOn: true, past: false, format: 'device', theme: 'device', weekend: false, remind: false, streakTab: false, streakFor: 'wake', streakRule: 1, streakStyle: 'row' };
+
+  const ICONS = {
+    today: '<circle cx="8" cy="8" r="2.6"/><path d="M8 1.6v1.6M8 12.8v1.6M1.6 8h1.6M12.8 8h1.6M3.5 3.5l1.1 1.1M11.4 11.4l1.1 1.1M3.5 12.5l1.1-1.1M11.4 4.6l1.1-1.1"/>',
+    calendar: '<rect x="2.2" y="3.2" width="11.6" height="10.6" rx="2.2"/><path d="M2.2 6.6h11.6M5.4 1.8v2.4M10.6 1.8v2.4"/>',
+    settings: '<path d="M2 4.5h12M2 8h12M2 11.5h12"/><circle cx="6" cy="4.5" r="1.5" fill="currentColor" stroke="none"/><circle cx="10.5" cy="8" r="1.5" fill="currentColor" stroke="none"/><circle cx="5" cy="11.5" r="1.5" fill="currentColor" stroke="none"/>',
+    prev: '<path d="M9.8 3.6L5.6 8l4.2 4.4"/>',
+    next: '<path d="M6.2 3.6L10.4 8l-4.2 4.4"/>',
+  };
+
+  const $ = (id) => document.getElementById(id);
+  function h(tag, cls, ...kids) {
+    const node = document.createElement(tag);
+    if (cls) node.className = cls;
+    node.append(...kids);
+    return node;
+  }
+  function btn(cls, kids, onClick, label) {
+    const node = h('button', cls, ...kids);
+    node.type = 'button';
+    node.onclick = onClick;
+    if (label) node.setAttribute('aria-label', label);
+    return node;
+  }
+  function icon(name) {
+    const wrap = h('span');
+    wrap.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true">${ICONS[name]}</svg>`;
+    return wrap.firstChild;
+  }
+  function fmt(time) {
+    if (state.format !== '12h') return time;
+    const [hh, mm] = time.split(':');
+    return `${hh % 12 || 12}:${mm} ${hh < 12 ? 'AM' : 'PM'}`;
+  }
+  function lateness(level, text) {
+    const pill = h('span', 'pill', text);
+    Object.assign(pill.style, { background: tile(level).fill, color: tile(level).num });
+    return pill;
+  }
+  const head = (cls, big, small, ...tools) =>
+    h('div', `head ${cls}`, h('div', '', h('div', 'big', big), h('div', 'small', small)), h('div', 'tools', ...tools));
+
+  // The level of the day `back` days before today, reaching into September.
+  const levelBack = (mode, back) =>
+    TODAY - back >= 1 ? DATA[mode][NOW][TODAY - back] : DATA[mode][NOW - 1][30 + TODAY - back];
+  // Whether the day `back` days ago counts towards the streak, as the user set it up.
+  const counts = (back) => levelBack(state.streakFor, back) >= state.streakRule;
+  // The streak as [the number shown, the caption beside it].
+  function streakNow() {
+    if (state.streakStyle === 'seven') {
+      let n = 0;
+      for (let back = 0; back < 7; back++) if (counts(back)) n++;
+      return [`${n}/7`, 'of the last 7 days'];
+    }
+    // Today is a Monday, so the week that began on Sunday is two days old.
+    if (state.streakStyle === 'week') return [String([0, 1].filter(counts).length), 'this week, since Sunday'];
+    // In a row. Until today is logged, yesterday keeps the run alive.
+    let back = DATA[state.streakFor][NOW][TODAY] ? 0 : 1, n = 0;
+    while (back < 41 && counts(back)) { n++; back++; }
+    return [String(n), n === 1 ? 'day in a row' : 'days in a row'];
+  }
+  function bestRun() {
+    let best = 0, run = 0;
+    for (let back = 0; back < 41; back++) {
+      run = counts(back) ? run + 1 : 0;
+      best = Math.max(best, run);
+    }
+    return best;
+  }
+  function logToday(mode) {
+    DATA[mode][NOW][TODAY] = 3;
+    render('log');
+    snack(`Logged ${fmt(SAMPLE[mode][3][0])}`, () => {
+      delete DATA[mode][NOW][TODAY];
+      render('none');
+    });
+  }
+
+  // Zs leave the "In bed" button at uneven moments. They share one path, so a
+  // wait of at least 0.75s keeps each one clear of the one before it.
+  function breatheZs(button) {
+    const add = () => {
+      const z = h('b', '', 'Z');
+      z.setAttribute('aria-hidden', 'true');
+      button.insertBefore(z, button.lastChild);
+      return z;
+    };
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return void [add(), add(), add()];
+    const next = () => {
+      if (!button.isConnected) return;
+      add().onanimationend = (event) => event.target.remove();
+      setTimeout(next, 750 + Math.random() * 850);
+    };
+    setTimeout(next, 300);
+  }
+
+  // The sun outline: a circle whose radius swells and dips as a smooth wave.
+  function sunnyShape(lobes, depth, points = 180) {
+    const out = [];
+    for (let i = 0; i < points; i++) {
+      const a = (2 * Math.PI * i) / points;
+      const r = 50 * (1 - depth + depth * Math.cos(lobes * a));
+      out.push(`${(50 + r * Math.cos(a)).toFixed(2)}% ${(50 + r * Math.sin(a)).toFixed(2)}%`);
+    }
+    return `polygon(${out.join(', ')})`;
+  }
+
+  // Today has Wake and Bedtime. Calendar adds Streak as a third tab.
+  function modePills(why, withStreak) {
+    const tabs = [['wake', 'Wake'], ...(state.bedOn ? [['bed', 'Bedtime']] : []), ...(withStreak ? [['streak', 'Streak']] : [])];
+    if (tabs.length < 2) return [];
+    const current = withStreak && state.streakTab ? 'streak' : state.mode;
+    return [h('div', 'tabs', ...tabs.map(([tab, label]) =>
+      btn(`press${tab === current ? ' on' : ''}${tab === current && why === 'mode' ? ' bump' : ''}`, [label], () => {
+        if (withStreak) state.streakTab = tab === 'streak';
+        if (tab !== 'streak') state.mode = tab;
+        render('mode');
+      })))];
+  }
+
+  function monthHead(moved) {
+    const shift = (by) => { state.month += by; render(by > 0 ? 'next' : 'prev'); };
+    const prev = btn('round press', [icon('prev')], () => shift(-1), 'Previous month');
+    const next = btn('round press', [icon('next')], () => shift(1), 'Next month');
+    prev.disabled = state.month === 0;
+    next.disabled = state.month === MONTHS.length - 1;
+    return head(moved, MONTHS[state.month].name, '2026', prev, next);
+  }
+
+  // The third Calendar tab: the streak, the days of the month that count
+  // towards it, and the choices for how it works.
+  const STREAK_CHOICES = ['streakFor', 'streakRule', 'streakStyle'];
+  function streakView(why) {
+    const month = MONTHS[state.month], rec = DATA[state.streakFor][state.month];
+    const moved = why === 'next' || why === 'prev' ? why : '';
+    const grid = h('div', `grid ${moved}${['tab', 'mode', 'next', 'prev'].includes(why) ? ' wave' : ''}`);
+    for (const wd of 'SMTWTFS') grid.append(h('div', 'wd', wd));
+    for (let i = 0; i < month.blanks; i++) grid.append(h('div'));
+    for (let d = 1; d <= month.days; d++) {
+      const hit = rec[d] >= state.streakRule;
+      const day = h('div', `day${hit ? ' filled' : ''}${d === month.today ? ' today' : ''}`, String(d));
+      day.style.setProperty('--i', d);
+      if (hit) Object.assign(day.style, { background: tile(rec[d]).fill, color: tile(rec[d]).num });
+      else if (d > month.today) day.style.opacity = 0.38;
+      grid.append(day);
+    }
+    const [value, caption] = streakNow();
+    const best = state.streakStyle === 'row' ? [h('small', '', `Best so far: ${bestRun()}`)] : [];
+    const hero = h('div', `streakcard${STREAK_CHOICES.includes(why) ? ' pop' : ''}`, h('b', '', value), h('div', '', caption, ...best));
+    const pick = (text, key, options) => h('div', 'rowcard tall', text, h('div', 'seg', ...options.map(([value, name]) =>
+      btn(`press${state[key] === value ? ' on' : ''}${state[key] === value && why === key ? ' bump' : ''}`, [name], () => {
+        state[key] = value;
+        render(key);
+      }))));
+    const dot = (fill) => {
+      const node = h('i');
+      if (fill) node.style.background = fill;
+      else node.style.boxShadow = 'inset 0 0 0 1px var(--m-sub)';
+      return node;
+    };
+    return [
+      monthHead(moved),
+      ...modePills(why, true),
+      hero,
+      h('div', 'panel', grid),
+      h('div', 'legend', h('span', '', ...[4, 3, 2, 1].filter((level) => level >= state.streakRule).map((level) => dot(tile(level).fill)), 'Counts'), h('span', '', dot(), 'Does not count')),
+      h('div', 'panel', h('div', 'cap', 'How your streak works'),
+        ...(state.bedOn ? [pick('Follow', 'streakFor', [['wake', 'Wake'], ['bed', 'Bedtime']])] : []),
+        pick('A day counts when it is', 'streakRule', [[1, 'Logged'], [3, 'Within 30m'], [4, 'On time']]),
+        pick('Count', 'streakStyle', [['row', 'In a row'], ['seven', 'Last 7 days'], ['week', 'This week']])),
+    ];
+  }
+
+  function today(why) {
+    const rec = DATA[state.mode][NOW], sample = SAMPLE[state.mode], wake = state.mode === 'wake';
+    const swap = why === 'log' || why === 'mode' ? ' pop' : '';
+    const hero = rec[TODAY]
+      ? h('div', `result${swap}`, h('div', 'cap', wake ? 'You got up at' : 'You went to bed at'), h('div', 'time', fmt(sample[3][0])), lateness(3, sample[3][1]))
+      : btn(`sun press${wake ? '' : ' disc'}${swap}`, [h('i'), h('span', '', wake ? "I'm up" : 'In bed', h('small', '', `Target ${fmt(sample.target)}`))], () => logToday(state.mode));
+    if (!wake && !rec[TODAY]) breatheZs(hero);
+    const names = ['Today', 'Sunday 11', 'Saturday 10', 'Friday 9', 'Thursday 8'];
+    // In these rows the label drops the minutes once there is a full hour.
+    const short = (text) => text.replace(/(hrs?) \d+mins/, '$1');
+    const rows = names.map((name, i) => {
+      const day = TODAY - i, level = rec[day];
+      const right = level
+        ? [h('span', 'sub', fmt(sample[level][0])), lateness(level, short(sample[level][1]))]
+        : [h('span', 'sub', i === 0 ? 'Not logged yet' : 'No entry')];
+      return btn('rowcard press', [h('span', 'name', name), ...right], () => openSheet(NOW, day));
+    });
+    return [head('', 'Monday', '12 October'), ...modePills(why), hero, h('div', 'panel', h('div', 'cap', 'Last few days'), ...rows)];
+  }
+
+  function calendar(why) {
+    if (state.streakTab) return streakView(why);
+    const month = MONTHS[state.month], rec = DATA[state.mode][state.month];
+    const moved = why === 'next' || why === 'prev' ? why : '';
+    const grid = h('div', `grid ${moved}${['tab', 'mode', 'next', 'prev'].includes(why) ? ' wave' : ''}`);
+    for (const wd of 'SMTWTFS') grid.append(h('div', 'wd', wd));
+    for (let i = 0; i < month.blanks; i++) grid.append(h('div'));
+    for (let d = 1; d <= month.days; d++) {
+      const level = rec[d];
+      const day = btn(`day press${level ? ' filled' : ''}${d === month.today ? ' today' : ''}`, [String(d)], () => openSheet(state.month, d));
+      day.disabled = d > month.today;
+      day.style.setProperty('--i', d);
+      if (level) Object.assign(day.style, { background: tile(level).fill, color: tile(level).num });
+      grid.append(day);
+    }
+    const levels = Object.values(rec);
+    // Consistency: how close together the times are, whatever the target.
+    const mean = levels.reduce((sum, l) => sum + MINS[l], 0) / levels.length;
+    const spread = Math.round(levels.reduce((sum, l) => sum + Math.abs(MINS[l] - mean), 0) / levels.length);
+    const steady = levels.length > 1
+      ? h('div', 'consist', h('div', '', 'Consistency', h('small', '', `Your times vary by about ${spread}mins`)), h('b', '', `${Math.max(0, 100 - spread)}%`))
+      : h('div', 'consist', h('div', '', 'Consistency', h('small', '', 'Needs two logged days')), h('b', '', '–'));
+    const late = levels.length ? `+${Math.round(levels.reduce((sum, l) => sum + MINS[l], 0) / levels.length)}m` : '—';
+    const stats = [[levels.length, 'Logged'], [levels.filter((l) => l === 4).length, 'On time'], [late, 'Avg late']];
+    return [
+      monthHead(moved),
+      ...modePills(why, true),
+      h('div', 'stats', ...stats.map(([value, label], i) => h('div', i === 1 ? 'stat win' : 'stat', h('b', '', String(value)), label))),
+      steady,
+      h('div', 'panel', grid),
+      h('div', 'legend', ...TILES.map((t) => { const dot = h('i'); dot.style.background = t.fill; return h('span', '', dot, t.label); })),
+    ];
+  }
+
+  function settings(why) {
+    const label = (text, hint) => h('span', 'label', text, ...(hint ? [h('small', '', hint)] : []));
+    const toggle = (key, name, after) => {
+      const node = btn(`switch${state[key] ? ' on' : ''}`, [], () => {
+        state[key] = !state[key];
+        node.classList.toggle('on', state[key]);
+        node.setAttribute('aria-checked', state[key]);
+        if (after) after();
+      }, name);
+      node.setAttribute('role', 'switch');
+      node.setAttribute('aria-checked', state[key]);
+      return node;
+    };
+    const choice = (text, key, options) => h('div', 'rowcard tall', text, h('div', 'seg', ...options.map(([value, name]) =>
+      btn(`press${state[key] === value ? ' on' : ''}${state[key] === value && why === key ? ' bump' : ''}`, [name], () => {
+        state[key] = value;
+        if (key === 'theme') applyTheme();
+        render(key);
+      }))));
+    const bedTarget = h('div', 'rowcard', label('Target bedtime'), h('span', 'btn', fmt('22:00')));
+    const weekendWake = h('div', 'rowcard', label('Weekend wake-up time', 'Saturday and Sunday'), h('span', 'btn', fmt('08:00')));
+    const weekendBed = h('div', 'rowcard', label('Weekend bedtime', 'Friday and Saturday nights'), h('span', 'btn', fmt('23:00')));
+    const sync = () => {
+      bedTarget.hidden = !state.bedOn;
+      weekendWake.hidden = !state.weekend;
+      weekendBed.hidden = !(state.weekend && state.bedOn);
+    };
+    sync();
+    return [
+      head('', 'Settings', 'Targets, bedtime and display'),
+      h('div', 'panel', h('div', 'cap', 'Wake-up'),
+        h('div', 'rowcard', label('Target wake-up time'), h('span', 'btn', fmt('06:00'))),
+        h('div', 'rowcard', label('Different target on weekends'), toggle('weekend', 'Different target on weekends', sync)),
+        weekendWake,
+        h('div', 'rowcard', label('Wake-up reminder', 'A notification at your target time.'), toggle('remind', 'Wake-up reminder', () => {
+          if (state.remind) notice();
+        })),
+        h('div', 'rowcard', label('Apply targets to past days', 'Off: each day keeps its own target.'), toggle('past', 'Apply targets to past days'))),
+      h('div', 'panel', h('div', 'cap', 'Bedtime'),
+        h('div', 'rowcard', label('Track bedtime'), toggle('bedOn', 'Track bedtime', () => {
+          sync();
+          if (!state.bedOn) state.mode = state.streakFor = 'wake';
+        })),
+        bedTarget,
+        weekendBed),
+      h('div', 'panel', h('div', 'cap', 'Display'),
+        choice('Time format', 'format', [['device', 'Device'], ['12h', '12-hour'], ['24h', '24-hour']]),
+        choice('Theme', 'theme', [['device', 'Device'], ['light', 'Light'], ['dark', 'Dark']])),
+      h('div', 'panel', h('div', 'cap', 'Data'),
+        btn('rowcard press', [label('Export backup', 'Saves everything to one file.')], () => snack("Your phone's share sheet opens here")),
+        btn('rowcard press', [label('Restore from backup', 'Replaces what is on this phone.')], confirmRestore)),
+    ];
+  }
+
+  const SCREENS = { today, calendar, settings };
+  const phone = $('phone'), sheet = $('sheet');
+
+  // `why` says what just happened, so only the matching movement plays.
+  function render(why) {
+    const old = $('view');
+    const view = h('div', `view${why === 'tab' ? ' enter' : ''}`, ...SCREENS[state.tab](why));
+    view.id = 'view';
+    const top = old.scrollTop;
+    old.replaceWith(view);
+    if (why !== 'tab') view.scrollTop = top;
+    for (const item of $('nav').children) {
+      const on = item.dataset.tab === state.tab;
+      item.classList.toggle('on', on);
+      item.setAttribute('aria-current', on ? 'page' : 'false');
+    }
+    widgets();
+  }
+
+  // The two home-screen widgets. They always show wake-ups.
+  function widgets() {
+    const rec = DATA.wake[NOW], sample = SAMPLE.wake;
+    const small = rec[TODAY]
+      ? [h('div', 'cap', 'Up at'), h('div', 'time', fmt(sample[3][0])), lateness(3, sample[3][1])]
+      : [btn('mini', [h('i'), h('span', '', "I'm up")], () => logToday('wake'))];
+    const week = h('div', 'week');
+    [...'TWTFSSM'].forEach((letter, i) => {
+      const level = rec[TODAY - 6 + i], dot = h('i');
+      if (level) Object.assign(dot.style, { background: tile(level).fill, borderColor: 'transparent' });
+      week.append(h('div', '', dot, letter));
+    });
+    const [value, caption] = streakNow();
+    $('widgets').replaceChildren(
+      h('div', 'widget small', ...small),
+      h('div', 'widget wide', h('div', 'count', h('b', '', value), h('span', 'cap', caption)), week),
+    );
+  }
+
+  function openSheet(monthIndex, d) {
+    const rec = DATA[state.mode][monthIndex], sample = SAMPLE[state.mode], level = rec[d];
+    const [time, text] = level ? sample[level] : [sample.target, 'On time'];
+    const date = new Date(2026, MONTHS[monthIndex].index, d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+    const close = (changed) => {
+      closeSheet();
+      if (changed) render('none');
+    };
+    showSheet(
+      h('div', 'title', state.mode === 'wake' ? 'Wake-up' : 'Bedtime'),
+      h('div', '', date),
+      lateness(level || 4, text),
+      h('div', 'timebtn', fmt(time)),
+      h('div', 'actions',
+        ...(level ? [btn('btn text danger press', ['Delete'], () => { delete rec[d]; close(true); })] : []),
+        btn('btn text press', ['Cancel'], () => close(false)),
+        btn('btn press', ['Save'], () => { if (!level) rec[d] = 4; close(true); })),
+    );
+  }
+
+  function showSheet(...kids) {
+    sheet.replaceChildren(h('div', 'grab'), ...kids);
+    $('scrim').onclick = closeSheet;
+    sheet.inert = false;
+    phone.classList.add('sheet-open');
+  }
+  function closeSheet() {
+    phone.classList.remove('sheet-open');
+    sheet.inert = true;
+  }
+
+  // Restoring replaces everything, so it says what is in the file and asks first.
+  function confirmRestore() {
+    showSheet(
+      h('div', 'title', 'Restore?'),
+      h('div', '', 'rise-backup-2026-10-03.json'),
+      h('div', 'cap', '41 wake-ups and 28 bedtimes, up to 3 October. This replaces everything on this phone.'),
+      h('div', 'actions',
+        btn('btn text press', ['Cancel'], closeSheet),
+        btn('btn press', ['Replace'], () => {
+          closeSheet();
+          snack('Restored 41 wake-ups and 28 bedtimes');
+        })),
+    );
+  }
+
+  // The reminder, as it would drop down from the top of the screen.
+  let noticeTimer;
+  function notice() {
+    $('notice').replaceChildren(h('small', '', 'Rise · now'), h('b', '', 'Time to get up'), `Your target is ${fmt('06:00')}`);
+    $('notice').classList.add('show');
+    clearTimeout(noticeTimer);
+    noticeTimer = setTimeout(() => $('notice').classList.remove('show'), 3200);
+  }
+
+  let snackTimer;
+  // A message at the bottom. Given `undo`, it gets an Undo button and stays longer.
+  function snack(text, undo) {
+    const hide = () => $('snack').classList.remove('show');
+    const action = undo ? [btn('press', ['Undo'], () => { undo(); hide(); })] : [];
+    $('snack').replaceChildren(text, ...action);
+    $('snack').classList.add('show');
+    clearTimeout(snackTimer);
+    snackTimer = setTimeout(hide, undo ? 5000 : 3000);
+  }
+
+  function applyTheme() {
+    const page = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const t = THEMES[state.theme === 'device' ? page : state.theme];
+    // Set on the page, so the widgets below the phone take the same colours.
+    for (const [name, value] of Object.entries(t)) document.documentElement.style.setProperty(`--m-${name}`, value);
+  }
+
+
+  for (const [name, label] of [['today', 'Today'], ['calendar', 'Calendar'], ['settings', 'Settings']]) {
+    const item = btn('press', [h('span', '', icon(name)), label], () => {
+      if (state.tab === name) return;
+      state.tab = name;
+      render('tab');
+    });
+    item.dataset.tab = name;
+    $('nav').append(item);
+  }
+  $('reset').onclick = () => {
+    DATA = freshData();
+    Object.assign(state, { tab: 'today', month: NOW });
+    render('tab');
+  };
+  $('reduced').hidden = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.documentElement.style.setProperty('--sun', sunnyShape(10, 0.07));
+
+  // Picture mode. Opening the page with #shot=today (or logged, calendar,
+  // streak, settings, sheet, bedtime, widgets; add ,light for the light
+  // theme) shows only the phone, or only the widgets, in that state. The
+  // pictures in the README are taken this way, with nothing moving.
+  const shot = ((location.hash.match(/^#shot=([\w,-]+)/) || [])[1] || '').split(',');
+  const wants = (name) => shot.includes(name);
+  if (shot[0]) {
+    document.body.classList.add('shot');
+    if (wants('widgets')) document.body.classList.add('shot-widgets');
+    state.theme = wants('light') ? 'light' : 'dark';
+    if (wants('logged')) DATA.wake[NOW][TODAY] = 3;
+    if (wants('bedtime')) state.mode = 'bed';
+    if (wants('calendar') || wants('streak')) state.tab = 'calendar';
+    if (wants('streak')) state.streakTab = true;
+    if (wants('settings')) state.tab = 'settings';
+    // t<tenths of a degree> turns the sun, for the frames of the moving picture.
+    const turn = shot.find((part) => /^t\d+$/.test(part));
+    if (turn) document.documentElement.style.setProperty('--turn', Number(turn.slice(1)) / 10 + 'deg');
+  }
+
+  applyTheme();
+  render('none');
+  if (wants('sheet')) openSheet(NOW, TODAY - 1);
+</script>
+</body>
+</html>

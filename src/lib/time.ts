@@ -121,10 +121,11 @@ export function effectiveTarget(entry: Entry, currentTarget: string, applyToPast
   return applyToPast ? currentTarget : entry.target;
 }
 
-const dateOfKey = (key: string) => {
+// The local date a day's key stands for.
+export function dateOfKey(key: string): Date {
   const [year, month, day] = key.split('-').map(Number);
   return new Date(year, month - 1, day);
-};
+}
 
 // The current target for a day of the week (0 is Sunday). With weekend targets
 // on, weekend mornings are Saturday and Sunday, and weekend nights are the
@@ -273,7 +274,7 @@ export function addEntry(records: Records, key: string, time: string, currentTar
   return { ...records, [key]: { time, target: currentTarget } };
 }
 
-// Day dialog: a new entry stores the current target, an edit keeps the stored one.
+// Day sheet: a new entry stores the current target, an edit keeps the stored one.
 export function upsertEntry(records: Records, key: string, time: string, currentTarget: string): Records {
   return { ...records, [key]: { time, target: records[key]?.target ?? currentTarget } };
 }

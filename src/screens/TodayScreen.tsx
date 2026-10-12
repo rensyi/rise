@@ -10,6 +10,7 @@ import {
   type Mode,
   type Records,
   dateKey,
+  dateOfKey,
   diffMinutes,
   effectiveTarget,
   formatTime,
@@ -37,11 +38,6 @@ type Props = {
   onSelectDay: (key: string) => void;
 };
 
-const dateOf = (key: string) => {
-  const [year, month, day] = key.split('-').map(Number);
-  return new Date(year, month - 1, day);
-};
-
 // The first screen: the day in large type, one big button to log, and the last few days.
 export default function TodayScreen({
   now,
@@ -62,7 +58,8 @@ export default function TodayScreen({
   const logged = records[logKey];
   // What a day is measured against: its own stored target, unless targets apply to past days.
   const targetFor = (key: string) =>
-    records[key] ? effectiveTarget(records[key], targetOn(key), applyToPast) : targetOn(key);  // What a tap brings in springs into place. It stays still when the screen is opened.
+    records[key] ? effectiveTarget(records[key], targetOn(key), applyToPast) : targetOn(key);
+  // What a tap brings in springs into place. It stays still when the screen is opened.
   const entered = useEntered();
   const pop = { pop: true, off: !entered.current };
 
@@ -102,14 +99,14 @@ export default function TodayScreen({
         </Enter>
       )}
 
-      <Panel title="Last seven days">
+      <Panel title="Last few days">
         <Rows>
-          {recentKeys(logKey, 7).map((key) => {
+          {recentKeys(logKey, 5).map((key) => {
             const entry = records[key];
             const name =
               key === todayKey
                 ? 'Today'
-                : dateOf(key).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric' });
+                : dateOfKey(key).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric' });
             const none = key === logKey ? 'Not logged yet' : 'No entry';
             const spoken = entry
               ? `${name}, ${formatTime(entry.time, hour24)}, ${latenessLabel(diffMinutes(targetFor(key), entry.time, mode))}`

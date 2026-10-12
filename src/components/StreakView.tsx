@@ -136,7 +136,14 @@ export default function StreakView({ view, slide, config, streak, hour24, todayK
 }
 
 const styles = StyleSheet.create({
-  hero: { flexDirection: 'row', alignItems: 'center', gap: 16, borderRadius: 36, paddingVertical: 18, paddingHorizontal: 24 },
+  hero: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    borderRadius: 36,
+    paddingVertical: 18,
+    paddingHorizontal: 24,
+  },
   count: { fontFamily: 'Rubik_500Medium', letterSpacing: -1 },
   heroText: { flex: 1, gap: 2 },
   grid: { padding: 6 },

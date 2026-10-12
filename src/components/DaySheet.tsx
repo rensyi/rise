@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Button, type MD3Theme, Text, useTheme } from 'react-native-paper';
-import { type Entry, type Mode, effectiveTarget } from '../lib/time';
+import { type Entry, type Mode, dateOfKey, effectiveTarget } from '../lib/time';
 import LatenessPill from './LatenessPill';
 import Sheet from './Sheet';
 import TimeField from './TimeField';
@@ -37,8 +37,7 @@ export default function DaySheet({
   const [time, setTime] = useState(entry?.time ?? currentTarget);
   const target = entry ? effectiveTarget(entry, currentTarget, applyToPast) : currentTarget;
   const name = mode === 'wake' ? 'Wake-up' : 'Bedtime';
-  const [year, month, day] = dateKey.split('-').map(Number);
-  const date = new Date(year, month - 1, day).toLocaleDateString(undefined, {
+  const date = dateOfKey(dateKey).toLocaleDateString(undefined, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',

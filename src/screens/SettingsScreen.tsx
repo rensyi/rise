@@ -1,9 +1,10 @@
 import { StyleSheet, View } from 'react-native';
-import { type MD3Theme, Switch, Text, useTheme } from 'react-native-paper';
+import { type MD3Theme, Text, useTheme } from 'react-native-paper';
 import BigTitle from '../components/BigTitle';
 import { Panel, Row, Rows } from '../components/Panel';
 import Pills from '../components/Pills';
 import TimeField from '../components/TimeField';
+import Toggle from '../components/Toggle';
 import type { Config, ThemeChoice, TimeFormat } from '../lib/time';
 import { rowSecondaryColor } from '../theme';
 
@@ -58,7 +59,7 @@ export default function SettingsScreen({ config, hour24, onChange, onExport, onR
           </Row>
           <Row>
             {label('Different target on weekends')}
-            <Switch
+            <Toggle
               accessibilityLabel="Different target on weekends"
               value={config.weekendTargets}
               onValueChange={(weekendTargets) => set({ weekendTargets })}
@@ -77,7 +78,7 @@ export default function SettingsScreen({ config, hour24, onChange, onExport, onR
           )}
           <Row>
             {label('Wake-up reminder', 'A notification at your target time.')}
-            <Switch
+            <Toggle
               accessibilityLabel="Wake-up reminder"
               value={config.reminder}
               onValueChange={(reminder) => set({ reminder })}
@@ -85,7 +86,7 @@ export default function SettingsScreen({ config, hour24, onChange, onExport, onR
           </Row>
           <Row>
             {label('Apply targets to past days', 'Off: each day keeps the target it was logged with.')}
-            <Switch
+            <Toggle
               accessibilityLabel="Apply targets to past days"
               value={config.applyTargetsToPast}
               onValueChange={(applyTargetsToPast) => set({ applyTargetsToPast })}
@@ -98,7 +99,7 @@ export default function SettingsScreen({ config, hour24, onChange, onExport, onR
         <Rows>
           <Row>
             {label('Track bedtime')}
-            <Switch
+            <Toggle
               accessibilityLabel="Track bedtime"
               value={config.bedEnabled}
               onValueChange={(bedEnabled) => set({ bedEnabled })}

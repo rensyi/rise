@@ -1,4 +1,4 @@
-# Assets — placeholders
+# Assets
 
 `icon.png` is the real app icon. `favicon.png`, `android-icon-foreground.png`
 and `android-icon-background.png` are made from it by resizing only; make
