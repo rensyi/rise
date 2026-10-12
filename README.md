@@ -1,8 +1,8 @@
-# Rise
-
-<p align="center">
-  <img src="assets/splash-icon.png" width="240" alt="Rise: a sun rising over a land of calendar tiles">
-</p>
+<h1 align="center">
+  Rise
+  <br>
+  <img src="assets/splash-icon.png" width="240" alt="A sun rising over a land of calendar tiles">
+</h1>
 
 A mobile app for tracking when you wake up.
 
