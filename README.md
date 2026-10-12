@@ -19,6 +19,18 @@ never affects your wake tracking.
 > launch screen, the wake-up reminder on Android, and the Android home-screen
 > widgets. All four were found working on an Android phone on 2026-10-13.
 
+## Download
+
+Rise is in beta, and for Android only. Get the APK from the
+[Releases page](https://github.com/rensyi/rise/releases).
+
+1. On your Android phone, open the newest release and download the `.apk`
+   file listed under "Assets".
+2. Open it. Android will ask you to allow installing from your browser or
+   file manager; allow it.
+3. If Play Protect shows a caution, that is normal for an app that is not
+   from the Play Store.
+
 ## Preview
 
 <p>
