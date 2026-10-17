@@ -4,7 +4,15 @@
   Rise
 </h1>
 
-A mobile app for tracking when you wake up.
+<p align="center"><em>Keep your word to your alarm, one morning at a time.</em></p>
+
+<p align="center">
+  <code>habit-tracker</code> <code>wake-up</code> <code>morning-routine</code> <code>streak</code> <code>android</code>
+</p>
+
+Your alarm knows when you meant to get up. Rise records when you actually did:
+one tap each morning, and a gold calendar that shows how close you came to
+your target. No account, no ads, Android, in beta.
 
 Waking is an exact moment: you wake, you log it. Rise is built around that one
 tap. Bedtime can be tracked too, but it is optional, means "laid in bed" and
